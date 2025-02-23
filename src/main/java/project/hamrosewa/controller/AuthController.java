@@ -46,6 +46,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserDTO user){
         try{
+            if (user.getEmail() == null || user.getPassword() == null) {
+                return new ResponseEntity<>("Email and password are required", HttpStatus.BAD_REQUEST);
+            }
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword())
             );
@@ -53,15 +57,15 @@ public class AuthController {
             if (authentication.isAuthenticated()){
                 String token = jwtUtil.generateToken(user.getEmail());
                 return ResponseEntity.ok(token);
-            }else {
-                 return new ResponseEntity<>("Invalid credentials!", HttpStatus.UNAUTHORIZED);
+            } else {
+                return new ResponseEntity<>("Invalid email or password", HttpStatus.UNAUTHORIZED);
             }
 
-        }catch (BadCredentialsException e){
-            return new ResponseEntity<>("Invalid credentials!", HttpStatus.UNAUTHORIZED);
-        }catch (Exception e){
-            System.out.println(e);
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (BadCredentialsException e){
+            return new ResponseEntity<>("Invalid email or password", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e){
+            return new ResponseEntity<>("An error occurred during login: " + e.getMessage(), 
+                                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -161,5 +165,12 @@ public class AuthController {
         return new ResponseEntity<>("Admin registered successfully!", HttpStatus.CREATED);
     }
 
-
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            // You might want to add the token to a blacklist or invalidate it here
+            return ResponseEntity.ok("Logged out successfully");
+        }
+        return ResponseEntity.badRequest().body("Invalid token");
+    }
 }
