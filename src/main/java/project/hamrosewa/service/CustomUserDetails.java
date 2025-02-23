@@ -6,6 +6,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import project.hamrosewa.model.User;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public class CustomUserDetails implements UserDetails {
 
@@ -16,9 +17,7 @@ public class CustomUserDetails implements UserDetails {
     }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
-                .toList();
+        return Collections.singleton(new SimpleGrantedAuthority(user.getRole().getName()));
     }
 
     @Override
@@ -28,6 +27,6 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getUsername();
+        return user.getEmail();
     }
 }

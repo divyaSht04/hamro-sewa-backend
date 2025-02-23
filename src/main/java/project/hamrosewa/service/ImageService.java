@@ -20,8 +20,7 @@ public class ImageService {
         if (file.isEmpty()) {
             throw new IOException("File is empty");
         }
-
-        // Get the backend project directory path.
+        // Get the backend project directory path using System.getProperty("user.dir")
         String projectRoot = System.getProperty("user.dir"); // This gives backend project directory
         String finalUploadDir = Paths.get(projectRoot, uploadDir).toString();
 
@@ -42,7 +41,7 @@ public class ImageService {
         // Save the file to the "uploads" directory in the backend folder
         file.transferTo(new File(filePath));
 
-        return safeFileName; // Save only the filename in the database
+        return safeFileName;
     }
 
     public byte[] getProfileImage(String fileName) throws IOException {

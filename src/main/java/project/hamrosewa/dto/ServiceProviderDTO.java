@@ -1,13 +1,18 @@
 package project.hamrosewa.dto;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.Date;
 
 @Data
-public class UserDTO {
+public class ServiceProviderDTO {
+
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     private String username;
@@ -17,18 +22,18 @@ public class UserDTO {
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters long")
+    @Size(min = 4, message = "Password must be at least 8 characters long")
     private String password;
 
     @NotBlank(message = "Phone number is required")
     @Pattern(regexp = "\\d{10}", message = "Phone number must be exactly 10 digits")
     private String phoneNumber;
-
+    private String address;
     private MultipartFile image;
 
-    private String address;
-
-    @NotNull(message = "Date of birth is required")
-    @Past(message = "Date of birth must be in the past")
-    private LocalDate dateOfBirth;
+    private String businessName;
+    private String serviceCategory;
+    private String description;
+    private Double hourlyRate;
+    private LocalDate date = LocalDate.now();
 }
