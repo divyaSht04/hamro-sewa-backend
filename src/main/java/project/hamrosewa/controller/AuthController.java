@@ -10,6 +10,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.AdminDTO;
@@ -24,6 +26,7 @@ import project.hamrosewa.util.JWTUtil;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -51,25 +54,41 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody UserDTO user){
         try{
             if (user.getEmail() == null || user.getPassword() == null) {
-                return new ResponseEntity<>("Email and password are required", HttpStatus.BAD_REQUEST);
+                return ResponseEntity.badRequest()
+                    .body("Email and password are required");
             }
 
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword())
-            );
+            try {
+                Authentication authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword())
+                );
 
-            if (authentication.isAuthenticated()){
-                String token = jwtUtil.generateToken(user.getEmail());
-                return ResponseEntity.ok(token);
-            } else {
-                return new ResponseEntity<>("Invalid email or password", HttpStatus.UNAUTHORIZED);
+                if (authentication.isAuthenticated()){
+                    String token = jwtUtil.generateToken(user.getEmail());
+                    org.springframework.security.core.userdetails.UserDetails userDetails = (org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal();
+
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("token", token);
+                    response.put("user", Map.of(
+                        "email", user.getEmail(),
+                        "roles", userDetails.getAuthorities().stream()
+                                .map(GrantedAuthority::getAuthority)
+                                .toList()
+                    ));
+
+                    return ResponseEntity.ok(response);
+                }
+                
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid email or password");
+                
+            } catch (BadCredentialsException e) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid email or password");
             }
-
-        } catch (BadCredentialsException e){
-            return new ResponseEntity<>("Invalid email or password", HttpStatus.UNAUTHORIZED);
-        } catch (Exception e){
-            return new ResponseEntity<>("An error occurred during login: " + e.getMessage(), 
-                                     HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("An error occurred during login: " + e.getMessage());
         }
     }
 
