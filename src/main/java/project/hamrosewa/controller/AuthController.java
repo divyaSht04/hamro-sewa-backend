@@ -19,6 +19,7 @@ import project.hamrosewa.dto.UserDTO;
 import project.hamrosewa.service.AdminService;
 import project.hamrosewa.service.CustomerService;
 import project.hamrosewa.service.ServiceProviderService;
+import project.hamrosewa.service.TokenBlackListService;
 import project.hamrosewa.util.JWTUtil;
 
 import java.io.IOException;
@@ -42,6 +43,9 @@ public class AuthController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private TokenBlackListService tokenBlackListService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserDTO user){
@@ -166,11 +170,12 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String token) {
-        if (token != null && token.startsWith("Bearer ")) {
-            // You might want to add the token to a blacklist or invalidate it here
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            tokenBlackListService.blacklistToken(token);
             return ResponseEntity.ok("Logged out successfully");
         }
-        return ResponseEntity.badRequest().body("Invalid token");
+        return ResponseEntity.badRequest().body("Invalid token format");
     }
 }

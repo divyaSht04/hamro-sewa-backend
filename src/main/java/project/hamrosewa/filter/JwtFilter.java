@@ -13,6 +13,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import project.hamrosewa.service.CustomUserDetailsImp;
+import project.hamrosewa.service.TokenBlackListService;
 import project.hamrosewa.util.JWTUtil;
 
 import java.io.IOException;
@@ -25,8 +26,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
     private CustomUserDetailsImp customUserDetailsImp;
+
     @Autowired
-    private ApplicationContext applicationContext;
+    private TokenBlackListService tokenBlacklistService; // Add this
 
 
     @Override
@@ -37,6 +39,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
+
+            if (tokenBlacklistService.isBlacklisted(token)) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token invalidated");
+                return;
+            }
             email = jwtUtil.extractEmail(token);
         }
 
