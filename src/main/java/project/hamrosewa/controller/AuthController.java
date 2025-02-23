@@ -6,14 +6,20 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.AdminDTO;
 import project.hamrosewa.dto.CustomerDTO;
 import project.hamrosewa.dto.ServiceProviderDTO;
+import project.hamrosewa.dto.UserDTO;
 import project.hamrosewa.service.AdminService;
 import project.hamrosewa.service.CustomerService;
 import project.hamrosewa.service.ServiceProviderService;
+import project.hamrosewa.util.JWTUtil;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -26,10 +32,38 @@ public class AuthController {
     private CustomerService customerService;
 
     @Autowired
+    private JWTUtil jwtUtil;
+
+    @Autowired
     private ServiceProviderService serviceProviderService;
 
     @Autowired
     private AdminService adminService;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody UserDTO user){
+        try{
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword())
+            );
+
+            if (authentication.isAuthenticated()){
+                String token = jwtUtil.generateToken(user.getEmail());
+                return ResponseEntity.ok(token);
+            }else {
+                 return new ResponseEntity<>("Invalid credentials!", HttpStatus.UNAUTHORIZED);
+            }
+
+        }catch (BadCredentialsException e){
+            return new ResponseEntity<>("Invalid credentials!", HttpStatus.UNAUTHORIZED);
+        }catch (Exception e){
+            System.out.println(e);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @PostMapping("/register-customer")
     public ResponseEntity<?> registerCustomer(
@@ -126,4 +160,6 @@ public class AuthController {
         adminService.registerAdmin(adminDTO);
         return new ResponseEntity<>("Admin registered successfully!", HttpStatus.CREATED);
     }
+
+
 }

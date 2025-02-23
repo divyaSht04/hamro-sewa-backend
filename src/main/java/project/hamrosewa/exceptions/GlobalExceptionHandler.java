@@ -17,4 +17,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleRoleException(RoleNotFoundException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler({JwtTokenException.class})
+    public ResponseEntity<String> handleJWTTokenException(JwtTokenException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
+    }
 }
