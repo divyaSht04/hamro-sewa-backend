@@ -43,14 +43,14 @@ public class ServiceProviderService {
             throw new UserValidationException("Username already exists");
         }
 
-        boolean emailExist = userRepository.findByEmail(serviceProviderDTO.getUsername()).isPresent();
+        boolean emailExist = userRepository.findByEmail(serviceProviderDTO.getEmail()).isPresent();
         if (emailExist) {
-            throw new UserValidationException("Username already exists");
+            throw new UserValidationException("Email already exists");
         }
 
-        boolean numberExists = userRepository.findByPhoneNumber(serviceProviderDTO.getUsername()).isPresent();
+        boolean numberExists = userRepository.findByPhoneNumber(serviceProviderDTO.getPhoneNumber()).isPresent();
         if (numberExists) {
-            throw new UserValidationException("Username already exists");
+            throw new UserValidationException("Number already exists");
         }
 
         ServiceProvider serviceProvider = new ServiceProvider();

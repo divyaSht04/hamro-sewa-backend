@@ -86,7 +86,7 @@ public class JWTUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public Date extractExpiration(String token) {
+    public  Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 }

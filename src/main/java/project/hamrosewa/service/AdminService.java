@@ -36,12 +36,12 @@ public class AdminService {
             throw new UserValidationException("Username already exists");
         }
 
-        boolean emailExist = userRepository.findByEmail(adminDTO.getUsername()).isPresent();
+        boolean emailExist = userRepository.findByEmail(adminDTO.getEmail()).isPresent();
         if (emailExist) {
             throw new UserValidationException("Email already exists");
         }
 
-        boolean numberExists = userRepository.findByPhoneNumber(adminDTO.getUsername()).isPresent();
+        boolean numberExists = userRepository.findByPhoneNumber(adminDTO.getPhoneNumber()).isPresent();
         if (numberExists) {
             throw new UserValidationException("Number already exists");
         }

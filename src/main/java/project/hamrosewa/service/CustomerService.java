@@ -9,10 +9,13 @@ import project.hamrosewa.exceptions.UserValidationException;
 import project.hamrosewa.model.Customer;
 import project.hamrosewa.model.Role;
 import project.hamrosewa.model.User;
+import project.hamrosewa.repository.CustomerRepository;
 import project.hamrosewa.repository.RoleRepository;
 import project.hamrosewa.repository.UserRepository;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CustomerService {
@@ -28,6 +31,8 @@ public class CustomerService {
 
     @Autowired
     private ImageService imageStorageService;
+    @Autowired
+    private CustomerRepository customerRepository;
 
     @Transactional
     public void registerCustomer(CustomerDTO customerDTO) throws IOException {
@@ -36,14 +41,14 @@ public class CustomerService {
             throw new UserValidationException("Username already exists");
         }
 
-        boolean emailExist = userRepository.findByEmail(customerDTO.getUsername()).isPresent();
+        boolean emailExist = userRepository.findByEmail(customerDTO.getEmail()).isPresent();
         if (emailExist) {
-            throw new UserValidationException("Username already exists");
+            throw new UserValidationException("Email already exists");
         }
 
-        boolean numberExists = userRepository.findByPhoneNumber(customerDTO.getUsername()).isPresent();
+        boolean numberExists = userRepository.findByPhoneNumber(customerDTO.getPhoneNumber()).isPresent();
         if (numberExists) {
-            throw new UserValidationException("Username already exists");
+            throw new UserValidationException("Phone Number already exists");
         }
 
         Customer customer = new Customer();
@@ -64,6 +69,13 @@ public class CustomerService {
         userRepository.save(customer);
     }
 
+    public List<Customer> getCustomerInfo(int customerId) {
+        Optional<Customer> customer = customerRepository.findAllById(customerId);
+        if (customer.isEmpty()) {
+            throw new RuntimeException("Customer not found");
+        }
+        return List.of(customer.get());
+    }
 
 
     public byte[] getCustomerProfileImage(int userId) throws IOException {
@@ -74,5 +86,55 @@ public class CustomerService {
         }
 
         return imageStorageService.getProfileImage(user.getImage());
+    }
+
+    @Transactional
+    public void updateCustomer(long customerId, CustomerDTO customerDTO) throws IOException {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        if (customerDTO.getUsername() != null && !customerDTO.getUsername().isEmpty() &&
+                !customerDTO.getUsername().equals(customer.getUsername())) {
+            Optional<User> userByUsername = userRepository.findByUsername(customerDTO.getUsername());
+            if (userByUsername.isPresent() && userByUsername.get().getId() != customer.getId()) {
+                throw new UserValidationException("Username already exists");
+            }
+            customer.setUsername(customerDTO.getUsername());
+        }
+
+        if (customerDTO.getEmail() != null && !customerDTO.getEmail().isEmpty() &&
+                !customerDTO.getEmail().equals(customer.getEmail())) {
+            Optional<User> userByEmail = userRepository.findByEmail(customerDTO.getEmail());
+            if (userByEmail.isPresent() && userByEmail.get().getId() != customer.getId()) {
+                throw new UserValidationException("Email already exists");
+            }
+            customer.setEmail(customerDTO.getEmail());
+        }
+
+        if (customerDTO.getPhoneNumber() != null && !customerDTO.getPhoneNumber().isEmpty() &&
+                !customerDTO.getPhoneNumber().equals(customer.getPhoneNumber())) {
+            Optional<User> userByPhone = userRepository.findByPhoneNumber(customerDTO.getPhoneNumber());
+            if (userByPhone.isPresent() && userByPhone.get().getId() != customer.getId()) {
+                throw new UserValidationException("Phone number already exists");
+            }
+            customer.setPhoneNumber(customerDTO.getPhoneNumber());
+        }
+
+        if (customerDTO.getPassword() != null && !customerDTO.getPassword().isEmpty()) {
+            customer.setPassword(passwordEncoder.encode(customerDTO.getPassword()));
+        }
+
+        if (customerDTO.getAddress() != null && !customerDTO.getAddress().isEmpty()) {
+            customer.setAddress(customerDTO.getAddress());
+        }
+        if (customerDTO.getFullName() != null && !customerDTO.getFullName().isEmpty()) {
+            customer.setFullName(customerDTO.getFullName());
+        }
+        if (customerDTO.getImage() != null && !customerDTO.getImage().isEmpty()) {
+            String fileName = imageStorageService.saveProfileImage(customerDTO.getImage());
+            customer.setImage(fileName);
+        }
+
+        customerRepository.save(customer);
     }
 }
