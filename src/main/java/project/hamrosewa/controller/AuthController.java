@@ -19,6 +19,8 @@ import project.hamrosewa.dto.AdminDTO;
 import project.hamrosewa.dto.CustomerDTO;
 import project.hamrosewa.dto.ServiceProviderDTO;
 import project.hamrosewa.dto.UserDTO;
+import project.hamrosewa.model.User;
+import project.hamrosewa.repository.UserRepository;
 import project.hamrosewa.service.AdminService;
 import project.hamrosewa.service.CustomerService;
 import project.hamrosewa.service.ServiceProviderService;
@@ -51,6 +53,9 @@ public class AuthController {
     @Autowired
     private TokenBlackListService tokenBlackListService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserDTO user){
         try{
@@ -68,10 +73,16 @@ public class AuthController {
                     String token = jwtUtil.generateToken(user.getEmail());
                     org.springframework.security.core.userdetails.UserDetails userDetails = (org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal();
 
+                    // Get the user from repository to get the ID
+                    User userEntity = userRepository.findByEmail(user.getEmail())
+                            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
                     Map<String, Object> response = new HashMap<>();
                     response.put("token", token);
                     response.put("user", Map.of(
+                        "id", userEntity.getId(),
                         "email", user.getEmail(),
+                        "username", userEntity.getUsername(),
                         "roles", userDetails.getAuthorities().stream()
                                 .map(GrantedAuthority::getAuthority)
                                 .toList()

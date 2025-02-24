@@ -63,7 +63,7 @@ public class CustomerService {
             customer.setImage(null);
         }
         customer.setAddress(customerDTO.getAddress());
-        Role userRole = roleRepository.findByName("ROLE_USER");
+        Role userRole = roleRepository.findByName("ROLE_CUSTOMER");
         customer.setRole(userRole);
         customer.setFullName(customerDTO.getFullName());
         userRepository.save(customer);
