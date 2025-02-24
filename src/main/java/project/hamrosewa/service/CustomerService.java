@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.CustomerDTO;
 import project.hamrosewa.exceptions.UserValidationException;
 import project.hamrosewa.model.Customer;
@@ -136,6 +137,15 @@ public class CustomerService {
             customer.setImage(fileName);
         }
 
+        customerRepository.save(customer);
+    }
+
+    @Transactional
+    public void updateCustomerPhoto(long customerId, MultipartFile photo) throws IOException {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found with id: " + customerId));
+        String fileName = imageStorageService.saveProfileImage(photo);
+        customer.setImage(fileName);
         customerRepository.save(customer);
     }
 }

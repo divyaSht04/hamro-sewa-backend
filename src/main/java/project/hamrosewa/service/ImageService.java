@@ -7,45 +7,41 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
 @Service
 public class ImageService {
 
-    @Value("${image.upload.dir}") // From application.properties
+    @Value("${image.upload.dir}")
     private String uploadDir;
 
     public String saveProfileImage(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
             throw new IOException("File is empty");
         }
-        // Get the backend project directory path using System.getProperty("user.dir")
-        String projectRoot = System.getProperty("user.dir"); // This gives backend project directory
-        String finalUploadDir = Paths.get(projectRoot, uploadDir).toString();
 
-        // Ensure the "uploads" directory exists inside the backend folder
-        File directory = new File(finalUploadDir);
+        // Create uploads directory if it doesn't exist
+        File directory = new File(uploadDir);
         if (!directory.exists()) {
-            boolean created = directory.mkdirs();
-            if (!created) {
-                throw new IOException("Failed to create upload directory!");
-            }
+            directory.mkdirs();
         }
 
         // Generate a unique filename
         String originalFileName = file.getOriginalFilename();
-        String safeFileName = UUID.randomUUID().toString() + "_" + (originalFileName != null ? originalFileName.replace(" ", "_") : "image.png");
-        String filePath = finalUploadDir + File.separator + safeFileName;
+        String extension = originalFileName != null ? originalFileName.substring(originalFileName.lastIndexOf(".")) : ".png";
+        String fileName = UUID.randomUUID().toString() + extension;
 
-        // Save the file to the "uploads" directory in the backend folder
-        file.transferTo(new File(filePath));
+        // Save the file
+        Path filePath = Paths.get(uploadDir, fileName);
+        Files.write(filePath, file.getBytes());
 
-        return safeFileName;
+        return fileName;
     }
 
     public byte[] getProfileImage(String fileName) throws IOException {
-        String filePath = uploadDir + File.separator + fileName;
-        return Files.readAllBytes(Paths.get(filePath));
+        Path filePath = Paths.get(uploadDir, fileName);
+        return Files.readAllBytes(filePath);
     }
 }
