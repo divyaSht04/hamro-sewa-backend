@@ -59,6 +59,7 @@ public class AdminService {
         }
         admin.setAddress(adminDTO.getAddress());
         Role userRole = roleRepository.findByName("ROLE_ADMIN");
+        admin.setDateOfBirth(adminDTO.getDateOfBirth());
         admin.setRole(userRole);
         admin.setFullName(adminDTO.getFullName());
         admin.setDepartment(adminDTO.getDepartment());
