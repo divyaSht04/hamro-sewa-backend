@@ -136,6 +136,9 @@ public class CustomerService {
             String fileName = imageStorageService.saveProfileImage(customerDTO.getImage());
             customer.setImage(fileName);
         }
+        if (customerDTO.getDateOfBirth() != null) {
+            customer.setDateOfBirth(customerDTO.getDateOfBirth());
+        }
 
         customerRepository.save(customer);
     }

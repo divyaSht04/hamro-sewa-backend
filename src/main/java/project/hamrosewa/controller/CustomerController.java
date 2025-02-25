@@ -1,6 +1,7 @@
 package project.hamrosewa.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ public class CustomerController {
     private ImageService imageService;
 
     @GetMapping("/info/{id}")
-    public ResponseEntity<?> getCustomerInfo(@PathVariable int id){
+    public ResponseEntity<?> getCustomerInfo(@PathVariable int id) {
         List<Customer> customerInfo = customerService.getCustomerInfo(id);
         return new ResponseEntity<>(customerInfo, HttpStatus.OK);
     }
@@ -38,7 +39,7 @@ public class CustomerController {
             @RequestParam(required = false) String phoneNumber,
             @RequestParam(required = false) String address,
             @RequestParam(required = false) String fullName,
-            @RequestParam(required = false) String dateOfBirth,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateOfBirth,
             @RequestPart(required = false) MultipartFile image
     ) throws IOException {
         CustomerDTO customerDTO = new CustomerDTO();
@@ -47,9 +48,7 @@ public class CustomerController {
         customerDTO.setPhoneNumber(phoneNumber);
         customerDTO.setAddress(address);
         customerDTO.setFullName(fullName);
-        if (dateOfBirth != null && !dateOfBirth.isEmpty()) {
-            customerDTO.setDateOfBirth(LocalDate.parse(dateOfBirth));
-        }
+        customerDTO.setDateOfBirth(dateOfBirth);
         customerDTO.setImage(image);
 
         customerService.updateCustomer(customerId, customerDTO);

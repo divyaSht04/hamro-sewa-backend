@@ -23,8 +23,6 @@ public class WebConfig implements WebMvcConfigurer {
         registry
                 .addResourceHandler("/uploads/**")
                 .addResourceLocations("file:uploads/") // Relative path
-                // OR absolute path:
-                // .addResourceLocations("file:///C:/path/to/uploads/")
                 .setCachePeriod(3600);
     }
 }
