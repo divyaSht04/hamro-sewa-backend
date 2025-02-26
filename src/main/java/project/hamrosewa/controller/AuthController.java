@@ -155,9 +155,7 @@ public class AuthController {
             @RequestParam("phoneNumber") String phoneNumber,
             @RequestParam("address") String address,
             @RequestParam("businessName") String businessName,
-            @RequestParam("serviceCategory") String serviceCategory,
-            @RequestParam("description") String description,
-            @RequestParam("hourlyRate") Double hourlyRate,
+
             @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
 
         ServiceProviderDTO serviceProviderDTO = new ServiceProviderDTO();
@@ -167,9 +165,6 @@ public class AuthController {
         serviceProviderDTO.setPhoneNumber(phoneNumber);
         serviceProviderDTO.setAddress(address);
         serviceProviderDTO.setBusinessName(businessName);
-        serviceProviderDTO.setServiceCategory(serviceCategory);
-        serviceProviderDTO.setDescription(description);
-        serviceProviderDTO.setHourlyRate(hourlyRate);
         serviceProviderDTO.setImage(image);
 
         serviceProviderService.registerServiceProvider(serviceProviderDTO);

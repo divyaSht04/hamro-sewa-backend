@@ -7,16 +7,15 @@ import org.springframework.stereotype.Service;
 import project.hamrosewa.dto.CustomerDTO;
 import project.hamrosewa.dto.ServiceProviderDTO;
 import project.hamrosewa.exceptions.UserValidationException;
-import project.hamrosewa.model.Customer;
-import project.hamrosewa.model.Role;
-import project.hamrosewa.model.ServiceProvider;
-import project.hamrosewa.model.User;
+import project.hamrosewa.model.*;
 import project.hamrosewa.repository.RoleRepository;
 import project.hamrosewa.repository.ServiceProviderRepository;
 import project.hamrosewa.repository.UserRepository;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ServiceProviderService {
@@ -58,13 +57,8 @@ public class ServiceProviderService {
         serviceProvider.setEmail(serviceProviderDTO.getEmail());
         serviceProvider.setPhoneNumber(serviceProviderDTO.getPhoneNumber());
         serviceProvider.setPassword(passwordEncoder.encode(serviceProviderDTO.getPassword()));
-        serviceProvider.setServiceCategory(serviceProviderDTO.getServiceCategory());
         serviceProvider.setBusinessName(serviceProviderDTO.getBusinessName());
         serviceProvider.setAddress(serviceProviderDTO.getAddress());
-        serviceProvider.setDescription(serviceProviderDTO.getDescription());
-        serviceProvider.setDate(LocalDate.now());
-        serviceProvider.setVerified(false);
-        serviceProvider.setHourlyRate(serviceProviderDTO.getHourlyRate());
 
         if (serviceProviderDTO.getImage() != null && !serviceProviderDTO.getImage().isEmpty()) {
             String fileName = imageStorageService.saveProfileImage(serviceProviderDTO.getImage());
@@ -88,5 +82,17 @@ public class ServiceProviderService {
         }
 
         return imageStorageService.getProfileImage(user.getImage());
+    }
+
+    public ServiceProvider getServiceProviderById(Long id) {
+        return serviceProviderRepository.findById(id).orElse(null);
+    }
+
+    public List<ProviderService> getProviderServices(Long providerId) {
+        ServiceProvider serviceProvider = getServiceProviderById(providerId);
+        if (serviceProvider == null) {
+            throw new RuntimeException("Service provider not found");
+        }
+        return serviceProvider.getServices();
     }
 }

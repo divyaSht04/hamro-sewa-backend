@@ -8,8 +8,4 @@ import java.time.LocalDate;
 public class ServiceProviderDTO extends UserDTO{
 
     private String businessName;
-    private String serviceCategory;
-    private String description;
-    private Double hourlyRate;
-    private LocalDate date = LocalDate.now();
 }

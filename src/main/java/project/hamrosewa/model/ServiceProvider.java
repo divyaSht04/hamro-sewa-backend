@@ -1,22 +1,20 @@
 package project.hamrosewa.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.time.LocalDate;
-
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity(name = "service_provider")
 @Data
 @PrimaryKeyJoinColumn(name = "service_provider_id")
-public class ServiceProvider extends User{
+public class ServiceProvider extends User {
     private String businessName;
-    private String serviceCategory;
-    private String description;
-    private boolean isVerified;
-    private Double hourlyRate;
-    @Column(name = "provider_date")
-    private LocalDate date;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "serviceProvider")
+    private List<ProviderService> services;
 }

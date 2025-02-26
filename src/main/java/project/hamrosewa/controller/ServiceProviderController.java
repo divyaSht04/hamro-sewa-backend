@@ -18,7 +18,7 @@ public class ServiceProviderController {
     private ServiceProviderService serviceProvider;
 
     @PutMapping("/edit-customer/{serviceProviderId}")
-    public ResponseEntity<?> editCustomer(
+    public ResponseEntity<?> editServiceProvider(
             @PathVariable long serviceProviderId,
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String email,
