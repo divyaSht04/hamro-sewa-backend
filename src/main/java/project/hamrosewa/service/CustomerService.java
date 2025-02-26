@@ -58,9 +58,9 @@ public class CustomerService {
         customer.setPhoneNumber(customerDTO.getPhoneNumber());
         customer.setPassword(passwordEncoder.encode(customerDTO.getPassword()));
         if (customerDTO.getImage() != null && !customerDTO.getImage().isEmpty()) {
-            String fileName = imageStorageService.saveProfileImage(customerDTO.getImage());
+            String fileName = imageStorageService.saveImage(customerDTO.getImage());
             customer.setImage(fileName);
-        }else {
+        } else {
             customer.setImage(null);
         }
         customer.setDateOfBirth(customerDTO.getDateOfBirth());
@@ -87,7 +87,7 @@ public class CustomerService {
             throw new RuntimeException("User has no profile image");
         }
 
-        return imageStorageService.getProfileImage(user.getImage());
+        return imageStorageService.getImage(user.getImage());
     }
 
     @Transactional
@@ -133,8 +133,14 @@ public class CustomerService {
             customer.setFullName(customerDTO.getFullName());
         }
         if (customerDTO.getImage() != null && !customerDTO.getImage().isEmpty()) {
-            String fileName = imageStorageService.saveProfileImage(customerDTO.getImage());
+            if (customer.getImage() != null) {
+                imageStorageService.deleteImage(customer.getImage());
+            }
+            String fileName = imageStorageService.saveImage(customerDTO.getImage());
             customer.setImage(fileName);
+        } else if (customer.getImage() != null) {
+            imageStorageService.deleteImage(customer.getImage());
+            customer.setImage(null);
         }
         if (customerDTO.getDateOfBirth() != null) {
             customer.setDateOfBirth(customerDTO.getDateOfBirth());
@@ -147,7 +153,11 @@ public class CustomerService {
     public void updateCustomerPhoto(long customerId, MultipartFile photo) throws IOException {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found with id: " + customerId));
-        String fileName = imageStorageService.saveProfileImage(photo);
+        
+        if (customer.getImage() != null) {
+            imageStorageService.deleteImage(customer.getImage());
+        }
+        String fileName = imageStorageService.saveImage(photo);
         customer.setImage(fileName);
         customerRepository.save(customer);
     }

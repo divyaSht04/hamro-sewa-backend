@@ -61,9 +61,9 @@ public class ServiceProviderService {
         serviceProvider.setAddress(serviceProviderDTO.getAddress());
 
         if (serviceProviderDTO.getImage() != null && !serviceProviderDTO.getImage().isEmpty()) {
-            String fileName = imageStorageService.saveProfileImage(serviceProviderDTO.getImage());
+            String fileName = imageStorageService.saveImage(serviceProviderDTO.getImage());
             serviceProvider.setImage(fileName);
-        }else {
+        } else {
             serviceProvider.setImage(null);
         }
 
@@ -72,7 +72,60 @@ public class ServiceProviderService {
         userRepository.save(serviceProvider);
     }
 
+    @Transactional
+    public void updateServiceProvider(Long id, ServiceProviderDTO serviceProviderDTO) throws IOException {
+        ServiceProvider serviceProvider = serviceProviderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Service provider not found"));
 
+        if (serviceProviderDTO.getUsername() != null && !serviceProviderDTO.getUsername().equals(serviceProvider.getUsername())) {
+            boolean usernameExists = userRepository.findByUsername(serviceProviderDTO.getUsername()).isPresent();
+            if (usernameExists) {
+                throw new UserValidationException("Username already exists");
+            }
+            serviceProvider.setUsername(serviceProviderDTO.getUsername());
+        }
+
+        if (serviceProviderDTO.getEmail() != null && !serviceProviderDTO.getEmail().equals(serviceProvider.getEmail())) {
+            boolean emailExists = userRepository.findByEmail(serviceProviderDTO.getEmail()).isPresent();
+            if (emailExists) {
+                throw new UserValidationException("Email already exists");
+            }
+            serviceProvider.setEmail(serviceProviderDTO.getEmail());
+        }
+
+        if (serviceProviderDTO.getPhoneNumber() != null && !serviceProviderDTO.getPhoneNumber().equals(serviceProvider.getPhoneNumber())) {
+            boolean numberExists = userRepository.findByPhoneNumber(serviceProviderDTO.getPhoneNumber()).isPresent();
+            if (numberExists) {
+                throw new UserValidationException("Phone number already exists");
+            }
+            serviceProvider.setPhoneNumber(serviceProviderDTO.getPhoneNumber());
+        }
+
+        if (serviceProviderDTO.getPassword() != null && !serviceProviderDTO.getPassword().isEmpty()) {
+            serviceProvider.setPassword(passwordEncoder.encode(serviceProviderDTO.getPassword()));
+        }
+
+        if (serviceProviderDTO.getBusinessName() != null) {
+            serviceProvider.setBusinessName(serviceProviderDTO.getBusinessName());
+        }
+
+        if (serviceProviderDTO.getAddress() != null) {
+            serviceProvider.setAddress(serviceProviderDTO.getAddress());
+        }
+
+        if (serviceProviderDTO.getImage() != null && !serviceProviderDTO.getImage().isEmpty()) {
+            if (serviceProvider.getImage() != null) {
+                imageStorageService.deleteImage(serviceProvider.getImage());
+            }
+            String fileName = imageStorageService.saveImage(serviceProviderDTO.getImage());
+            serviceProvider.setImage(fileName);
+        } else if (serviceProvider.getImage() != null) {
+            imageStorageService.deleteImage(serviceProvider.getImage());
+            serviceProvider.setImage(null);
+        }
+
+        userRepository.save(serviceProvider);
+    }
 
     public byte[] getCustomerProfileImage(int userId) throws IOException {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
@@ -81,7 +134,7 @@ public class ServiceProviderService {
             throw new RuntimeException("User has no profile image");
         }
 
-        return imageStorageService.getProfileImage(user.getImage());
+        return imageStorageService.getImage(user.getImage());
     }
 
     public ServiceProvider getServiceProviderById(Long id) {
