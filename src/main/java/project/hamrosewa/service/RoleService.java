@@ -1,5 +1,6 @@
 package project.hamrosewa.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,7 +11,7 @@ import project.hamrosewa.repository.RoleRepository;
 import java.util.List;
 import java.util.Optional;
 
-
+@Transactional
 @Service
 public class RoleService {
 

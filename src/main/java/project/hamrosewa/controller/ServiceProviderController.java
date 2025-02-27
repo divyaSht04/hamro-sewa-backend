@@ -6,18 +6,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.ServiceProviderDTO;
+import project.hamrosewa.model.ServiceProvider;
 import project.hamrosewa.service.ServiceProviderService;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/serviceProvider")
 public class ServiceProviderController {
 
     @Autowired
-    private ServiceProviderService serviceProvider;
+    private ServiceProviderService serviceProviderService;
 
-    @PutMapping("/edit-customer/{serviceProviderId}")
+    @PutMapping("/edit-serviceProvider/{serviceProviderId}")
     public ResponseEntity<?> editServiceProvider(
             @PathVariable long serviceProviderId,
             @RequestParam(required = false) String username,
@@ -35,7 +37,7 @@ public class ServiceProviderController {
         serviceProviderDTO.setBusinessName(businessName);
         serviceProviderDTO.setImage(image);
 
-//        serviceProvider.updateCustomer(serviceProviderId, serviceProviderDTO);
+        serviceProviderService.updateServiceProvider(serviceProviderId, serviceProviderDTO);
         return new ResponseEntity<>("Profile updated successfully!", HttpStatus.OK);
     }
 
@@ -43,8 +45,13 @@ public class ServiceProviderController {
     public ResponseEntity<?> uploadPhoto(@PathVariable long customerId,
                                          @RequestParam("photo") MultipartFile photo)
             throws IOException {
-//        serviceProvider.updateCustomerPhoto(customerId, photo);
+        serviceProviderService.updateServiceProviderPhoto(customerId, photo);
         return ResponseEntity.ok("Photo updated successfully");
     }
 
+    @GetMapping("/info/{id}")
+    public ResponseEntity<?> getServiceProvider(@PathVariable long id) throws IOException {
+        List<ServiceProvider> serviceProvider = serviceProviderService.getServiceProviderInfo(id);
+        return new ResponseEntity<>(serviceProvider, HttpStatus.OK);
+    }
 }

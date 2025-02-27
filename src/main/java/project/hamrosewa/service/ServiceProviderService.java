@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.CustomerDTO;
 import project.hamrosewa.dto.ServiceProviderDTO;
 import project.hamrosewa.exceptions.UserValidationException;
@@ -16,7 +17,9 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+@Transactional
 @Service
 public class ServiceProviderService {
     @Autowired
@@ -35,7 +38,6 @@ public class ServiceProviderService {
     private ImageService imageStorageService;
 
 
-    @Transactional
     public void registerServiceProvider(ServiceProviderDTO serviceProviderDTO) throws IOException {
         boolean usernameExists = userRepository.findByUsername(serviceProviderDTO.getUsername()).isPresent();
         if (usernameExists) {
@@ -72,8 +74,9 @@ public class ServiceProviderService {
         userRepository.save(serviceProvider);
     }
 
+
     @Transactional
-    public void updateServiceProvider(Long id, ServiceProviderDTO serviceProviderDTO) throws IOException {
+        public void updateServiceProvider(Long id, ServiceProviderDTO serviceProviderDTO) throws IOException {
         ServiceProvider serviceProvider = serviceProviderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Service provider not found"));
 
@@ -147,5 +150,25 @@ public class ServiceProviderService {
             throw new RuntimeException("Service provider not found");
         }
         return serviceProvider.getServices();
+    }
+
+    public void updateServiceProviderPhoto(long customerId, MultipartFile photo) throws IOException {
+        ServiceProvider serviceProvider = serviceProviderRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found with id: " + customerId));
+
+        if (serviceProvider.getImage() != null) {
+            imageStorageService.deleteImage(serviceProvider.getImage());
+        }
+        String fileName = imageStorageService.saveImage(photo);
+        serviceProvider.setImage(fileName);
+        serviceProviderRepository.save(serviceProvider);
+    }
+
+    public List<ServiceProvider> getServiceProviderInfo(long id) {
+        Optional<ServiceProvider> serviceProvider = serviceProviderRepository.findById(id);
+        if (serviceProvider.isPresent()) {
+            return serviceProvider.stream().toList();
+        }
+        return null;
     }
 }

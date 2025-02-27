@@ -1,6 +1,7 @@
 package project.hamrosewa.service;
 
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import project.hamrosewa.dto.ProviderServiceDTO;
@@ -12,7 +13,7 @@ import project.hamrosewa.repository.ServiceProviderRepository;
 
 import java.io.IOException;
 
-
+@Transactional
 @Service
 public class ProviderServiceService {
 

@@ -15,6 +15,7 @@ import project.hamrosewa.repository.UserRepository;
 
 import java.io.IOException;
 
+@Transactional
 @Service
 public class AdminService {
 
@@ -30,7 +31,6 @@ public class AdminService {
     @Autowired
     private ImageService imageStorageService;
 
-    @Transactional
     public void registerAdmin(AdminDTO adminDTO) throws IOException {
         boolean usernameExists = userRepository.findByUsername(adminDTO.getUsername()).isPresent();
         if (usernameExists) {
