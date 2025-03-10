@@ -24,6 +24,9 @@ public class ProviderService {
     private BigDecimal price;
 
     private String pdfPath;
+    
+    // Add image field to store the image filename
+    private String imagePath;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "service_provider_id", foreignKey = @ForeignKey(name = "FK_PROV_SERV"))

@@ -32,7 +32,8 @@ public class ProviderServiceController {
             @RequestParam("description") String description,
             @RequestParam("price") BigDecimal price,
             @RequestParam("category") String category,
-            @RequestPart(value = "pdf", required = false) MultipartFile pdf
+            @RequestPart(value = "pdf", required = false) MultipartFile pdf,
+            @RequestPart(value = "image", required = false) MultipartFile image
     ) {
         try {
             ProviderServiceDTO serviceDTO = new ProviderServiceDTO();
@@ -42,6 +43,7 @@ public class ProviderServiceController {
             serviceDTO.setServiceProviderId(serviceProviderId);
             serviceDTO.setCategory(category);
             serviceDTO.setPdf(pdf);
+            serviceDTO.setImage(image);
 
             ProviderService createdService = providerServiceService.createService(serviceDTO);
             return new ResponseEntity<>(createdService, HttpStatus.CREATED);
@@ -58,7 +60,8 @@ public class ProviderServiceController {
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "price", required = false) BigDecimal price,
             @RequestParam(value = "category", required = false) String category,
-            @RequestPart(value = "pdf", required = false) MultipartFile pdf
+            @RequestPart(value = "pdf", required = false) MultipartFile pdf,
+            @RequestPart(value = "image", required = false) MultipartFile image
     ) {
         try {
             ProviderServiceDTO serviceDTO = new ProviderServiceDTO();
@@ -68,6 +71,7 @@ public class ProviderServiceController {
             serviceDTO.setServiceProviderId(serviceProviderId);
             serviceDTO.setCategory(category);
             serviceDTO.setPdf(pdf);
+            serviceDTO.setImage(image);
 
             ProviderService updatedService = providerServiceService.updateService(serviceId, serviceDTO);
             return new ResponseEntity<>(updatedService, HttpStatus.OK);
@@ -104,6 +108,41 @@ public class ProviderServiceController {
             return new ResponseEntity<>(service, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to fetch service: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+    
+    @GetMapping("/image/{serviceId}")
+    public ResponseEntity<?> getServiceImage(@PathVariable Long serviceId) {
+        try {
+            ProviderService service = providerServiceService.getServiceById(serviceId);
+            if (service.getImagePath() == null || service.getImagePath().isEmpty()) {
+                return new ResponseEntity<>("No image found for this service", HttpStatus.NOT_FOUND);
+            }
+            
+            byte[] imageData = providerServiceService.getServiceImage(service.getImagePath());
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(imageData);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to fetch service image: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+    
+    @GetMapping("/pdf/{serviceId}")
+    public ResponseEntity<?> getServicePdf(@PathVariable Long serviceId) {
+        try {
+            ProviderService service = providerServiceService.getServiceById(serviceId);
+            if (service.getPdfPath() == null || service.getPdfPath().isEmpty()) {
+                return new ResponseEntity<>("No PDF found for this service", HttpStatus.NOT_FOUND);
+            }
+            
+            byte[] pdfData = providerServiceService.getServicePdf(service.getPdfPath());
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header("Content-Disposition", "inline; filename=\"" + service.getServiceName().replaceAll("\\s+", "_") + ".pdf\"")
+                    .body(pdfData);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to fetch service PDF: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 }

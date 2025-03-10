@@ -13,6 +13,8 @@ public class ProviderServiceDTO {
     private BigDecimal price;
     private MultipartFile pdf;
     private String pdfPath;
+    private MultipartFile image;
+    private String imagePath;
     private String category;
     // to get service provider ID!
     private Long serviceProviderId;
