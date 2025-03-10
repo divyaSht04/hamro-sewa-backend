@@ -11,4 +11,5 @@ public class AdminDTO extends UserDTO {
 
     private LocalDate dateOfBirth;
     private String fullName;
+    private String department;
 }

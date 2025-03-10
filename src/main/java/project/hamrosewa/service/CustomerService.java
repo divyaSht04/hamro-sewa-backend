@@ -139,9 +139,6 @@ public class CustomerService {
             }
             String fileName = imageStorageService.saveImage(customerDTO.getImage());
             customer.setImage(fileName);
-        } else if (customer.getImage() != null) {
-            imageStorageService.deleteImage(customer.getImage());
-            customer.setImage(null);
         }
         if (customerDTO.getDateOfBirth() != null) {
             customer.setDateOfBirth(customerDTO.getDateOfBirth());

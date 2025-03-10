@@ -15,6 +15,8 @@ import project.hamrosewa.repository.RoleRepository;
 import project.hamrosewa.repository.UserRepository;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Transactional
 @Service
@@ -129,9 +131,6 @@ public class AdminService {
             }
             String fileName = imageStorageService.saveImage(adminDTO.getImage());
             admin.setImage(fileName);
-        } else if (admin.getImage() != null) {
-            imageStorageService.deleteImage(admin.getImage());
-            admin.setImage(null);
         }
 
         adminRepository.save(admin);
@@ -159,5 +158,28 @@ public class AdminService {
             throw new RuntimeException("User has no profile image");
         }
         return imageStorageService.getImage(user.getImage());
+    }
+
+    public Map<String, Object> getAdminInfo(long adminId) {
+        Admin admin = adminRepository.findById(adminId).get();
+
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
+
+        Map<String, Object> adminInfo = new HashMap<>();
+        adminInfo.put("id", admin.getId());
+        adminInfo.put("username", admin.getUsername());
+        adminInfo.put("email", admin.getEmail());
+        adminInfo.put("fullName", admin.getFullName());
+        adminInfo.put("phoneNumber", admin.getPhoneNumber());
+        adminInfo.put("address", admin.getAddress());
+        adminInfo.put("dateOfBirth", admin.getDateOfBirth());
+        adminInfo.put("image", admin.getImage());
+        adminInfo.put("department", admin.getDepartment());
+        adminInfo.put("name", admin.getFullName());
+        adminInfo.put("phone", admin.getPhoneNumber());
+
+        return adminInfo;
     }
 }
