@@ -7,12 +7,14 @@ import project.hamrosewa.dto.ProviderServiceDTO;
 import project.hamrosewa.exceptions.ProviderServiceException;
 import project.hamrosewa.model.ProviderService;
 import project.hamrosewa.model.ServiceProvider;
+import project.hamrosewa.model.ServiceStatus;
 import project.hamrosewa.repository.ProviderServiceRepository;
 import project.hamrosewa.repository.ServiceProviderRepository;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 @Transactional
 @Service
@@ -92,6 +94,11 @@ public class ProviderServiceService {
         if (dto.getPrice() != null) service.setPrice(dto.getPrice());
         service.setServiceProvider(provider);
         if (dto.getCategory() != null) service.setCategory(dto.getCategory());
+        
+        // Only set status to PENDING if it's a new service (ID is null)
+        if (service.getId() == null) {
+            service.setStatus(ServiceStatus.PENDING);
+        }
     }
 
     public void deleteService(Long serviceId) {
@@ -142,5 +149,56 @@ public class ProviderServiceService {
         
         Path path = pdfService.getPdfPath(pdfPath);
         return Files.readAllBytes(path);
+    }
+    
+    /**
+     * Approves a service
+     * @param serviceId ID of the service to approve
+     * @param feedback Optional feedback from admin
+     * @return The updated service
+     */
+    public ProviderService approveService(Long serviceId, String feedback) {
+        ProviderService service = providerServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new ProviderServiceException("Service not found"));
+        
+        service.setStatus(ServiceStatus.APPROVED);
+        if (feedback != null && !feedback.trim().isEmpty()) {
+            service.setAdminFeedback(feedback);
+        }
+        
+        return providerServiceRepository.save(service);
+    }
+    
+    /**
+     * Rejects a service
+     * @param serviceId ID of the service to reject
+     * @param feedback Feedback explaining why the service was rejected
+     * @return The updated service
+     */
+    public ProviderService rejectService(Long serviceId, String feedback) {
+        ProviderService service = providerServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new ProviderServiceException("Service not found"));
+        
+        service.setStatus(ServiceStatus.REJECTED);
+        service.setAdminFeedback(feedback);
+        
+        return providerServiceRepository.save(service);
+    }
+    
+    /**
+     * Gets all services with a specific status
+     * @param status The status to filter by
+     * @return List of services with the specified status
+     */
+    public List<ProviderService> getServicesByStatus(ServiceStatus status) {
+        return providerServiceRepository.findByStatus(status);
+    }
+    
+    /**
+     * Gets all services
+     * @return List of all services
+     */
+    public List<ProviderService> getAllServices() {
+        return providerServiceRepository.findAll();
     }
 }

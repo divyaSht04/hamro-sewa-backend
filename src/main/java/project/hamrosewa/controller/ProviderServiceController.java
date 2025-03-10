@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.ProviderServiceDTO;
 import project.hamrosewa.model.ProviderService;
+import project.hamrosewa.model.ServiceStatus;
 import project.hamrosewa.service.ProviderServiceService;
 import project.hamrosewa.service.ServiceProviderService;
 
@@ -143,6 +144,68 @@ public class ProviderServiceController {
                     .body(pdfData);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to fetch service PDF: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+    
+    /**
+     * Endpoint for admin to approve a service
+     */
+    @PutMapping("/approve/{serviceId}")
+    public ResponseEntity<?> approveService(
+            @PathVariable Long serviceId,
+            @RequestParam(value = "feedback", required = false) String feedback
+    ) {
+        try {
+            ProviderService service = providerServiceService.approveService(serviceId, feedback);
+            return new ResponseEntity<>(service, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to approve service: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+    
+    /**
+     * Endpoint for admin to reject a service
+     */
+    @PutMapping("/reject/{serviceId}")
+    public ResponseEntity<?> rejectService(
+            @PathVariable Long serviceId,
+            @RequestParam(value = "feedback", required = true) String feedback
+    ) {
+        try {
+            if (feedback == null || feedback.trim().isEmpty()) {
+                return new ResponseEntity<>("Feedback is required when rejecting a service", HttpStatus.BAD_REQUEST);
+            }
+            
+            ProviderService service = providerServiceService.rejectService(serviceId, feedback);
+            return new ResponseEntity<>(service, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to reject service: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+    
+    /**
+     * Endpoint to get all services with a specific status
+     */
+    @GetMapping("/status/{status}")
+    public ResponseEntity<?> getServicesByStatus(@PathVariable ServiceStatus status) {
+        try {
+            List<ProviderService> services = providerServiceService.getServicesByStatus(status);
+            return new ResponseEntity<>(services, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to fetch services: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+    
+    /**
+     * Endpoint to get all services (for admin)
+     */
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllServices() {
+        try {
+            List<ProviderService> services = providerServiceService.getAllServices();
+            return new ResponseEntity<>(services, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to fetch services: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 }

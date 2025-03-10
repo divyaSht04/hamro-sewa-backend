@@ -36,9 +36,25 @@ public class ProviderService {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ServiceStatus status = ServiceStatus.PENDING;
+    
+    @Column(name = "admin_feedback")
+    private String adminFeedback;
+    
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }
