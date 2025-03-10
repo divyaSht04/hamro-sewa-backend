@@ -10,6 +10,7 @@ import project.hamrosewa.exceptions.UserValidationException;
 import project.hamrosewa.model.Admin;
 import project.hamrosewa.model.Role;
 import project.hamrosewa.model.User;
+import project.hamrosewa.repository.AdminRepository;
 import project.hamrosewa.repository.RoleRepository;
 import project.hamrosewa.repository.UserRepository;
 
@@ -21,6 +22,9 @@ public class AdminService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AdminRepository adminRepository;
 
     @Autowired
     private RoleRepository roleRepository;
@@ -63,8 +67,7 @@ public class AdminService {
         admin.setDateOfBirth(adminDTO.getDateOfBirth());
         admin.setRole(userRole);
         admin.setFullName(adminDTO.getFullName());
-        admin.setDepartment(adminDTO.getDepartment());
-        userRepository.save(admin);
+        adminRepository.save(admin);
     }
 
     @Transactional
@@ -116,10 +119,6 @@ public class AdminService {
             admin.setAddress(adminDTO.getAddress());
         }
 
-        if (adminDTO.getDepartment() != null) {
-            admin.setDepartment(adminDTO.getDepartment());
-        }
-
         if (adminDTO.getDateOfBirth() != null) {
             admin.setDateOfBirth(adminDTO.getDateOfBirth());
         }
@@ -135,7 +134,7 @@ public class AdminService {
             admin.setImage(null);
         }
 
-        userRepository.save(admin);
+        adminRepository.save(admin);
     }
 
     @Transactional
@@ -150,7 +149,7 @@ public class AdminService {
         }
         String fileName = imageStorageService.saveImage(photo);
         admin.setImage(fileName);
-        userRepository.save(admin);
+        adminRepository.save(admin);
     }
 
     public byte[] getAdminProfileImage(int userId) throws IOException {

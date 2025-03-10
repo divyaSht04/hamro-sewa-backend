@@ -180,7 +180,6 @@ public class AuthController {
             @RequestParam("address") String address,
             @RequestParam("dateOfBirth") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateOfBirth,
             @RequestParam("fullName") String fullName,
-            @RequestParam("department") String department,
             @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
 
         AdminDTO adminDTO = new AdminDTO();
