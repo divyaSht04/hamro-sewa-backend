@@ -171,4 +171,15 @@ public class ServiceProviderService {
         }
         return null;
     }
+
+    public byte[] getServiceProviderImage(long id) throws IOException {
+        ServiceProvider serviceProvider = serviceProviderRepository.findById(id)
+                .orElseThrow(() -> new UserValidationException("Service provider not found with id: " + id));
+
+        if (serviceProvider.getImage() == null) {
+            throw new UserValidationException("Service provider has no image");
+        }
+
+        return imageStorageService.getImage(serviceProvider.getImage());
+    }
 }
