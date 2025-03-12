@@ -1,10 +1,12 @@
 package project.hamrosewa.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -33,6 +35,14 @@ public class ProviderService {
     private ServiceProvider serviceProvider;
 
     private String category;
+
+    @OneToMany(mappedBy = "providerService")
+    @JsonIgnore
+    private List<ServiceBooking> bookings;
+    
+    @OneToMany(mappedBy = "providerService")
+    @JsonIgnore
+    private List<Review> reviews;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

@@ -122,26 +122,13 @@ public class ProviderServiceService {
         return providerServiceRepository.findById(serviceId)
                 .orElseThrow(() -> new ProviderServiceException("Service not found"));
     }
-    
-    /**
-     * Retrieves the image data for a service
-     * @param imagePath the path of the image to retrieve
-     * @return byte array containing the image data
-     * @throws IOException if the image cannot be read
-     */
     public byte[] getServiceImage(String imagePath) throws IOException {
         if (imagePath == null || imagePath.isEmpty()) {
             throw new ProviderServiceException("Image path is null or empty");
         }
         return imageService.getImage(imagePath);
     }
-    
-    /**
-     * Retrieves the PDF data for a service
-     * @param pdfPath the path of the PDF to retrieve
-     * @return byte array containing the PDF data
-     * @throws IOException if the PDF cannot be read
-     */
+
     public byte[] getServicePdf(String pdfPath) throws IOException {
         if (pdfPath == null || pdfPath.isEmpty()) {
             throw new ProviderServiceException("PDF path is null or empty");
@@ -150,13 +137,7 @@ public class ProviderServiceService {
         Path path = pdfService.getPdfPath(pdfPath);
         return Files.readAllBytes(path);
     }
-    
-    /**
-     * Approves a service
-     * @param serviceId ID of the service to approve
-     * @param feedback Optional feedback from admin
-     * @return The updated service
-     */
+
     public ProviderService approveService(Long serviceId, String feedback) {
         ProviderService service = providerServiceRepository.findById(serviceId)
                 .orElseThrow(() -> new ProviderServiceException("Service not found"));
@@ -168,13 +149,7 @@ public class ProviderServiceService {
         
         return providerServiceRepository.save(service);
     }
-    
-    /**
-     * Rejects a service
-     * @param serviceId ID of the service to reject
-     * @param feedback Feedback explaining why the service was rejected
-     * @return The updated service
-     */
+
     public ProviderService rejectService(Long serviceId, String feedback) {
         ProviderService service = providerServiceRepository.findById(serviceId)
                 .orElseThrow(() -> new ProviderServiceException("Service not found"));
@@ -184,20 +159,11 @@ public class ProviderServiceService {
         
         return providerServiceRepository.save(service);
     }
-    
-    /**
-     * Gets all services with a specific status
-     * @param status The status to filter by
-     * @return List of services with the specified status
-     */
+
     public List<ProviderService> getServicesByStatus(ServiceStatus status) {
         return providerServiceRepository.findByStatus(status);
     }
-    
-    /**
-     * Gets all services
-     * @return List of all services
-     */
+
     public List<ProviderService> getAllServices() {
         return providerServiceRepository.findAll();
     }

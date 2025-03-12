@@ -9,7 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.CustomerDTO;
 import project.hamrosewa.model.Customer;
 import project.hamrosewa.service.CustomerService;
-import project.hamrosewa.service.ImageService;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -21,9 +20,6 @@ public class CustomerController {
 
     @Autowired
     private CustomerService customerService;
-
-    @Autowired
-    private ImageService imageService;
 
     @GetMapping("/info/{id}")
     public ResponseEntity<?> getCustomerInfo(@PathVariable int id) {
