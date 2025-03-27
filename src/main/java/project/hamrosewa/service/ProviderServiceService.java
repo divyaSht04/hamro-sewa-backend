@@ -105,12 +105,10 @@ public class ProviderServiceService {
         ProviderService service = providerServiceRepository.findById(serviceId)
                 .orElseThrow(() -> new ProviderServiceException("Service not found"));
 
-        // Delete PDF if exists
         if (service.getPdfPath() != null) {
             pdfService.deletePdf(service.getPdfPath());
         }
-        
-        // Delete image if exists
+
         if (service.getImagePath() != null) {
             imageService.deleteImage(service.getImagePath());
         }

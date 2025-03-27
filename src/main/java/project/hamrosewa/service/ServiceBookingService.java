@@ -28,15 +28,12 @@ public class ServiceBookingService {
     private ProviderServiceRepository providerServiceRepository;
     
     public ServiceBooking createBooking(ServiceBookingDTO bookingDTO) {
-        // Validate customer exists
         Customer customer = customerRepository.findById(bookingDTO.getCustomerId())
                 .orElseThrow(() -> new UserValidationException("Customer not found with id: " + bookingDTO.getCustomerId()));
-        
-        // Validate service exists
+
         ProviderService providerService = providerServiceRepository.findById(bookingDTO.getProviderServiceId())
                 .orElseThrow(() -> new ProviderServiceException("Service not found with id: " + bookingDTO.getProviderServiceId()));
-        
-        // Validate service is approved
+
         if (providerService.getStatus() != ServiceStatus.APPROVED) {
             throw new IllegalArgumentException("Cannot book a service that is not approved");
         }

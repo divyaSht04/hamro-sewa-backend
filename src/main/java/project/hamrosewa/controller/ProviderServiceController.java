@@ -169,9 +169,7 @@ public class ProviderServiceController {
         }
     }
     
-    /**
-     * Endpoint for admin to reject a service
-     */
+
     @PutMapping("/reject/{serviceId}")
     public ResponseEntity<?> rejectService(
             @PathVariable Long serviceId,
