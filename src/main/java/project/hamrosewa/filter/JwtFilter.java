@@ -34,10 +34,17 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
+        
+        // If no Authorization header, allow the request to proceed without authentication
+        if (authHeader == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         String token = null;
         String email = null;
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        if (authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
 
             if (tokenBlacklistService.isBlacklisted(token)) {

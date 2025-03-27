@@ -30,7 +30,6 @@ public class PdfService {
             Files.createDirectories(uploadDir);
         }
 
-        // Generate unique filename
         String originalFilename = pdf.getOriginalFilename();
         String filename = UUID.randomUUID().toString();
         if (originalFilename != null && originalFilename.contains(".")) {

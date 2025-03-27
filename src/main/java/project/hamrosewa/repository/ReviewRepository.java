@@ -13,7 +13,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     
     List<Review> findByProviderServiceId(Long providerServiceId);
     
-    // Replace the derived method with a custom query that works with Oracle
     @Query("SELECT COUNT(r) > 0 FROM Review r WHERE r.booking.id = :bookingId")
     boolean existsByBookingId(Long bookingId);
     

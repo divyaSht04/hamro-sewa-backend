@@ -24,5 +24,9 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceHandler("/documents/**")
                 .addResourceLocations("file:documents/") // Relative path
                 .setCachePeriod(3600);
+        
+        registry
+                .addResourceHandler("/static/**")
+                .addResourceLocations("classpath:/static/");
     }
 }

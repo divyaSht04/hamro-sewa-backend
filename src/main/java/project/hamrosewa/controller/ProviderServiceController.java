@@ -106,6 +106,9 @@ public class ProviderServiceController {
     public ResponseEntity<?> getServiceById(@PathVariable Long serviceId) {
         try {
             ProviderService service = providerServiceService.getServiceById(serviceId);
+            if (service == null) {
+                return new ResponseEntity<>("Service not found", HttpStatus.NOT_FOUND);
+            }
             return new ResponseEntity<>(service, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to fetch service: " + e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -116,6 +119,9 @@ public class ProviderServiceController {
     public ResponseEntity<?> getServiceImage(@PathVariable Long serviceId) {
         try {
             ProviderService service = providerServiceService.getServiceById(serviceId);
+            if (service == null) {
+                return new ResponseEntity<>("Service not found", HttpStatus.NOT_FOUND);
+            }
             if (service.getImagePath() == null || service.getImagePath().isEmpty()) {
                 return new ResponseEntity<>("No image found for this service", HttpStatus.NOT_FOUND);
             }
@@ -133,6 +139,9 @@ public class ProviderServiceController {
     public ResponseEntity<?> getServicePdf(@PathVariable Long serviceId) {
         try {
             ProviderService service = providerServiceService.getServiceById(serviceId);
+            if (service == null) {
+                return new ResponseEntity<>("Service not found", HttpStatus.NOT_FOUND);
+            }
             if (service.getPdfPath() == null || service.getPdfPath().isEmpty()) {
                 return new ResponseEntity<>("No PDF found for this service", HttpStatus.NOT_FOUND);
             }
@@ -146,10 +155,7 @@ public class ProviderServiceController {
             return new ResponseEntity<>("Failed to fetch service PDF: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-    
-    /**
-     * Endpoint for admin to approve a service
-     */
+
     @PutMapping("/approve/{serviceId}")
     public ResponseEntity<?> approveService(
             @PathVariable Long serviceId,
@@ -182,10 +188,7 @@ public class ProviderServiceController {
             return new ResponseEntity<>("Failed to reject service: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-    
-    /**
-     * Endpoint to get all services with a specific status
-     */
+
     @GetMapping("/status/{status}")
     public ResponseEntity<?> getServicesByStatus(@PathVariable ServiceStatus status) {
         try {
@@ -206,6 +209,16 @@ public class ProviderServiceController {
             return new ResponseEntity<>(services, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to fetch services: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/approved")
+    public ResponseEntity<?> getAllApprovedServices() {
+        try {
+            List<ProviderService> services = providerServiceService.getServicesByStatus(ServiceStatus.APPROVED);
+            return new ResponseEntity<>(services, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to fetch approved services: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 }
