@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-@Table(name = "REVIEWS") // uppercase cuz Oracle vibes better
+@Table(name = "REVIEWS")
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

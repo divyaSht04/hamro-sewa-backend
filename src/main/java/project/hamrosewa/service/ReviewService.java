@@ -35,7 +35,8 @@ public class ReviewService {
                 .orElseThrow(() -> new BookingNotFoundException(reviewDTO.getBookingId()));
         
         // Validate customer exists and matches the booking
-        Customer customer = customerRepository.findById(reviewDTO.getCustomerId())
+        int customerIdInt = reviewDTO.getCustomerId().intValue();
+        Customer customer = customerRepository.findById(customerIdInt)
                 .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + reviewDTO.getCustomerId()));
         
         if (booking.getCustomer().getId() != customer.getId()) {
@@ -68,8 +69,13 @@ public class ReviewService {
         review.setRating(reviewDTO.getRating());
         review.setComment(reviewDTO.getComment());
         review.setCreatedAt(LocalDateTime.now());
+
+        Review savedReview = reviewRepository.save(review);
+
+        booking.setReview(savedReview);
+        bookingRepository.save(booking);
         
-        return reviewRepository.save(review);
+        return savedReview;
     }
     
     public Review getReviewById(Long id) {
@@ -91,5 +97,45 @@ public class ReviewService {
     
     public Double calculateAverageRating(Long providerServiceId) {
         return reviewRepository.calculateAverageRatingForService(providerServiceId);
+    }
+    
+    public Review updateReview(Long reviewId, ReviewDTO reviewDTO) {
+        Review existingReview = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found with id: " + reviewId));
+
+        if (existingReview.getCustomer().getId() != reviewDTO.getCustomerId()) {
+            throw new ReviewValidationException("Customer does not own this review");
+        }
+
+        existingReview.setRating(reviewDTO.getRating());
+        existingReview.setComment(reviewDTO.getComment());
+        
+        return reviewRepository.save(existingReview);
+    }
+    
+    public void deleteReview(Long reviewId, Long customerId) {
+        // Validate review exists and is owned by the customer
+        Review existingReview = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found with id: " + reviewId));
+
+        if (existingReview.getCustomer().getId() != customerId.intValue()) {
+            throw new ReviewValidationException("Customer does not own this review");
+        }
+
+        ServiceBooking booking = existingReview.getBooking();
+        if (booking != null) {
+            booking.setReview(null);
+        }
+
+        reviewRepository.deleteById(reviewId);
+    }
+
+    public Boolean existsByBookingId(Long bookingId) {
+        // First verify that the booking exists
+        bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId));
+        
+        // Check if a review exists for this booking
+        return reviewRepository.existsByBookingId(bookingId);
     }
 }

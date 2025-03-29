@@ -28,7 +28,7 @@ public class ServiceBookingService {
     private ProviderServiceRepository providerServiceRepository;
     
     public ServiceBooking createBooking(ServiceBookingDTO bookingDTO) {
-        Customer customer = customerRepository.findById(bookingDTO.getCustomerId())
+        Customer customer = customerRepository.findById(Math.toIntExact(bookingDTO.getCustomerId()))
                 .orElseThrow(() -> new UserValidationException("Customer not found with id: " + bookingDTO.getCustomerId()));
 
         ProviderService providerService = providerServiceRepository.findById(bookingDTO.getProviderServiceId())

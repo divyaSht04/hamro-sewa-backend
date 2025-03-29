@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CustomerRepository extends JpaRepository<Customer, Long>{
-     Optional<Customer> findAllById(int customerId);
+public interface CustomerRepository extends JpaRepository<Customer, Integer>{
+     Optional<Customer> findAllById(long customerId);
+     Optional<Customer> findById(long customerId);
 }

@@ -1,6 +1,7 @@
 package project.hamrosewa.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrimaryKeyJoinColumn;
@@ -25,7 +26,7 @@ public class Customer extends User{
     @JsonIgnore
     private List<ServiceBooking> bookings;
     
-    @OneToMany(mappedBy = "customer")
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Review> reviews;
 }

@@ -67,4 +67,34 @@ public class ReviewController {
         }
         return new ResponseEntity<>(averageRating, HttpStatus.OK);
     }
+    
+    @GetMapping("/booking/{bookingId}/exists")
+    public ResponseEntity<Boolean> checkReviewExistsForBooking(@PathVariable Long bookingId) {
+        boolean exists = reviewService.existsByBookingId(bookingId);
+        return new ResponseEntity<>(exists, HttpStatus.OK);
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateReview(@PathVariable Long id, @Valid @RequestBody ReviewDTO reviewDTO) {
+        try {
+            Review updatedReview = reviewService.updateReview(id, reviewDTO);
+            return new ResponseEntity<>(updatedReview, HttpStatus.OK);
+        } catch (ReviewValidationException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteReview(@PathVariable Long id, @RequestParam Integer customerId) {
+        try {
+            reviewService.deleteReview(id, customerId.longValue());
+            return new ResponseEntity<>("Review deleted successfully", HttpStatus.OK);
+        } catch (ReviewValidationException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

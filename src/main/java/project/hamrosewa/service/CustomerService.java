@@ -72,7 +72,7 @@ public class CustomerService {
         userRepository.save(customer);
     }
 
-    public List<Customer> getCustomerInfo(int customerId) {
+    public List<Customer> getCustomerInfo(long customerId) {
         Optional<Customer> customer = customerRepository.findAllById(customerId);
         if (customer.isEmpty()) {
             throw new RuntimeException("Customer not found");

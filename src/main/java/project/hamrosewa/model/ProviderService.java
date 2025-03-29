@@ -29,8 +29,7 @@ public class ProviderService {
     private BigDecimal price;
 
     private String pdfPath;
-    
-    // Add image field to store the image filename
+
     private String imagePath;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -39,11 +38,11 @@ public class ProviderService {
 
     private String category;
 
-    @OneToMany(mappedBy = "providerService")
+    @OneToMany(mappedBy = "providerService", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<ServiceBooking> bookings;
     
-    @OneToMany(mappedBy = "providerService")
+    @OneToMany(mappedBy = "providerService", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Review> reviews;
 

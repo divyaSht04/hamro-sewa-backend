@@ -101,9 +101,16 @@ public class ProviderServiceService {
         }
     }
 
+    @Transactional
     public void deleteService(Long serviceId) {
         ProviderService service = providerServiceRepository.findById(serviceId)
                 .orElseThrow(() -> new ProviderServiceException("Service not found"));
+
+        // First clear all relationships with reviews
+        if (service.getReviews() != null && !service.getReviews().isEmpty()) {
+            service.getReviews().clear();
+            providerServiceRepository.save(service);
+        }
 
         if (service.getPdfPath() != null) {
             pdfService.deletePdf(service.getPdfPath());
