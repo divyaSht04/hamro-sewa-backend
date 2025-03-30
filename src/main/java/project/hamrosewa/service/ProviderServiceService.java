@@ -5,15 +5,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import project.hamrosewa.dto.ProviderServiceDTO;
 import project.hamrosewa.exceptions.ProviderServiceException;
-import project.hamrosewa.model.ProviderService;
-import project.hamrosewa.model.ServiceProvider;
-import project.hamrosewa.model.ServiceStatus;
+import project.hamrosewa.model.*;
 import project.hamrosewa.repository.ProviderServiceRepository;
 import project.hamrosewa.repository.ServiceProviderRepository;
+import project.hamrosewa.repository.ReviewRepository;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 @Transactional
@@ -32,6 +32,9 @@ public class ProviderServiceService {
     @Autowired
     private ImageService imageService;
 
+    @Autowired
+    private ReviewRepository reviewRepository;
+
     public ProviderService createService(ProviderServiceDTO serviceDTO) throws IOException {
         ServiceProvider provider = serviceProviderRepository.findById(serviceDTO.getServiceProviderId())
                 .orElseThrow(() -> new ProviderServiceException("Service provider not found"));
@@ -44,8 +47,7 @@ public class ProviderServiceService {
             String pdfPath = pdfService.savePdf(serviceDTO.getPdf());
             service.setPdfPath(pdfPath);
         }
-        
-        // Handle image upload
+
         if (serviceDTO.getImage() != null && !serviceDTO.getImage().isEmpty()) {
             String imagePath = imageService.saveImage(serviceDTO.getImage());
             service.setImagePath(imagePath);
@@ -106,10 +108,25 @@ public class ProviderServiceService {
         ProviderService service = providerServiceRepository.findById(serviceId)
                 .orElseThrow(() -> new ProviderServiceException("Service not found"));
 
-        // First clear all relationships with reviews
         if (service.getReviews() != null && !service.getReviews().isEmpty()) {
+            List<Review> reviewsToDelete = new ArrayList<>(service.getReviews());
+
+            for (Review review : reviewsToDelete) {
+                try {
+                    ServiceBooking booking = review.getBooking();
+                    if (booking != null) {
+                        booking.setReview(null);
+                    }
+                    review.setBooking(null);
+                    review.setProviderService(null);
+                    review.setCustomer(null);
+
+                    reviewRepository.delete(review);
+                } catch (Exception e) {
+                    throw new ProviderServiceException("Error deleting reviews for service: " + e.getMessage());
+                }
+            }
             service.getReviews().clear();
-            providerServiceRepository.save(service);
         }
 
         if (service.getPdfPath() != null) {

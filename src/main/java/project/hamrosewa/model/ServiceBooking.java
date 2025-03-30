@@ -31,7 +31,7 @@ public class ServiceBooking {
     @Column(nullable = false)
     private BookingStatus status = BookingStatus.PENDING;
     
-    @OneToOne(mappedBy = "booking")
+    @OneToOne(mappedBy = "booking", cascade = CascadeType.REFRESH, orphanRemoval = false)
     @JsonIgnore
     private Review review;
     
