@@ -96,8 +96,7 @@ public class ProviderServiceService {
         if (dto.getPrice() != null) service.setPrice(dto.getPrice());
         service.setServiceProvider(provider);
         if (dto.getCategory() != null) service.setCategory(dto.getCategory());
-        
-        // Only set status to PENDING if it's a new service (ID is null)
+
         if (service.getId() == null) {
             service.setStatus(ServiceStatus.PENDING);
         }

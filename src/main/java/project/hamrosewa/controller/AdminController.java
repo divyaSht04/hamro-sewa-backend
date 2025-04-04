@@ -10,13 +10,21 @@ import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.AdminDTO;
 import project.hamrosewa.dto.CustomerDTO;
 import project.hamrosewa.model.Admin;
+import project.hamrosewa.model.BookingStatus;
+import project.hamrosewa.model.ProviderService;
+import project.hamrosewa.model.ServiceStatus;
 import project.hamrosewa.repository.AdminRepository;
 import project.hamrosewa.repository.UserRepository;
 import project.hamrosewa.service.AdminService;
+import project.hamrosewa.service.ProviderServiceService;
+import project.hamrosewa.service.ServiceBookingService;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -28,7 +36,10 @@ public class AdminController {
     private final AdminService adminService;
     
     @Autowired
-    private final UserRepository userRepository;
+    private final ProviderServiceService providerService;
+
+    @Autowired
+    private final ServiceBookingService bookingService;
 
     @GetMapping("/info/{adminId}")
     public ResponseEntity<?> getAdminInfo(@PathVariable long adminId) {
@@ -65,4 +76,18 @@ public class AdminController {
         adminService.updateAdmin(adminId, adminDTO);
         return new ResponseEntity<>("Admin Updated Successfully!",HttpStatus.OK);
     }
+
+    @GetMapping("/earnings")
+    public ResponseEntity<?> getAdminEarnings() {
+        try {
+            BigDecimal earningsInfo = adminService.calculateAdminEarnings();
+            return new ResponseEntity<>(earningsInfo, HttpStatus.OK);
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate admin earnings");
+            errorResponse.put("message", e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

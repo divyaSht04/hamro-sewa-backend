@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.ProviderServiceDTO;
@@ -25,6 +26,7 @@ public class ProviderServiceController {
 
     @Autowired
     private ServiceProviderService serviceProviderService;
+
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createService(
@@ -114,7 +116,7 @@ public class ProviderServiceController {
             return new ResponseEntity<>("Failed to fetch service: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-    
+
     @GetMapping("/image/{serviceId}")
     public ResponseEntity<?> getServiceImage(@PathVariable Long serviceId) {
         try {
@@ -125,7 +127,7 @@ public class ProviderServiceController {
             if (service.getImagePath() == null || service.getImagePath().isEmpty()) {
                 return new ResponseEntity<>("No image found for this service", HttpStatus.NOT_FOUND);
             }
-            
+
             byte[] imageData = providerServiceService.getServiceImage(service.getImagePath());
             return ResponseEntity.ok()
                     .contentType(MediaType.IMAGE_JPEG)
@@ -134,7 +136,7 @@ public class ProviderServiceController {
             return new ResponseEntity<>("Failed to fetch service image: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-    
+
     @GetMapping("/pdf/{serviceId}")
     public ResponseEntity<?> getServicePdf(@PathVariable Long serviceId) {
         try {
@@ -145,7 +147,7 @@ public class ProviderServiceController {
             if (service.getPdfPath() == null || service.getPdfPath().isEmpty()) {
                 return new ResponseEntity<>("No PDF found for this service", HttpStatus.NOT_FOUND);
             }
-            
+
             byte[] pdfData = providerServiceService.getServicePdf(service.getPdfPath());
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_PDF)
@@ -168,7 +170,7 @@ public class ProviderServiceController {
             return new ResponseEntity<>("Failed to approve service: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-    
+
 
     @PutMapping("/reject/{serviceId}")
     public ResponseEntity<?> rejectService(
@@ -179,7 +181,7 @@ public class ProviderServiceController {
             if (feedback == null || feedback.trim().isEmpty()) {
                 return new ResponseEntity<>("Feedback is required when rejecting a service", HttpStatus.BAD_REQUEST);
             }
-            
+
             ProviderService service = providerServiceService.rejectService(serviceId, feedback);
             return new ResponseEntity<>(service, HttpStatus.OK);
         } catch (Exception e) {
@@ -196,10 +198,11 @@ public class ProviderServiceController {
             return new ResponseEntity<>("Failed to fetch services: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-    
+
     /**
      * Endpoint to get all services (for admin)
      */
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/all")
     public ResponseEntity<?> getAllServices() {
         try {

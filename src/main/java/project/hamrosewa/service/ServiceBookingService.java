@@ -2,6 +2,7 @@ package project.hamrosewa.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import project.hamrosewa.dto.ServiceBookingDTO;
 import project.hamrosewa.exceptions.BookingNotFoundException;
 import project.hamrosewa.exceptions.InvalidBookingStatusException;
@@ -27,6 +28,10 @@ public class ServiceBookingService {
     @Autowired
     private ProviderServiceRepository providerServiceRepository;
     
+    @Autowired
+    private LoyaltyService loyaltyService;
+    
+    @Transactional
     public ServiceBooking createBooking(ServiceBookingDTO bookingDTO) {
         Customer customer = customerRepository.findById(Math.toIntExact(bookingDTO.getCustomerId()))
                 .orElseThrow(() -> new UserValidationException("Customer not found with id: " + bookingDTO.getCustomerId()));
@@ -44,6 +49,26 @@ public class ServiceBookingService {
         booking.setBookingDateTime(bookingDTO.getBookingDateTime());
         booking.setBookingNotes(bookingDTO.getBookingNotes());
         booking.setStatus(BookingStatus.PENDING);
+        
+        // Check if the customer is eligible for a loyalty discount
+        boolean shouldApplyDiscount = loyaltyService.shouldApplyDiscount(
+                customer, providerService.getServiceProvider());
+        
+        if (shouldApplyDiscount) {
+            booking.setDiscountApplied(true);
+            booking.setDiscountPercentage(new java.math.BigDecimal("0.20")); // 20% discount
+            booking.setOriginalPrice(providerService.getPrice());
+            booking.setDiscountedPrice(
+                    loyaltyService.calculateDiscountedPrice(providerService.getPrice()));
+            
+            // Reset the loyalty counter after applying the discount
+            // This needs to happen at booking creation, not when the booking is completed
+            loyaltyService.resetLoyaltyCounter(customer, providerService.getServiceProvider());
+        } else {
+            booking.setDiscountApplied(false);
+            booking.setOriginalPrice(providerService.getPrice());
+            booking.setDiscountedPrice(providerService.getPrice());
+        }
         
         return bookingRepository.save(booking);
     }
@@ -65,52 +90,58 @@ public class ServiceBookingService {
         return bookingRepository.findByServiceProviderId(serviceProviderId);
     }
     
-    public ServiceBooking updateBookingStatus(Long id, BookingStatus newStatus) {
+    @Transactional
+    public ServiceBooking updateBookingStatus(Long id, BookingStatus newStatus, String comment, boolean preserveLoyalty) {
+        System.out.println("Updating booking " + id + " status to " + newStatus + ", preserveLoyalty=" + preserveLoyalty);
+        
         ServiceBooking booking = getBookingById(id);
         BookingStatus currentStatus = booking.getStatus();
+        System.out.println("Current status: " + currentStatus);
 
         validateStatusTransition(currentStatus, newStatus);
         
+        // Set the new status first so that loyalty processing sees the correct status
         booking.setStatus(newStatus);
+        booking.setStatusComment(comment);
         booking.setUpdatedAt(LocalDateTime.now());
         
-        return bookingRepository.save(booking);
-    }
-    
-    public void cancelBooking(Long id) {
-        ServiceBooking booking = getBookingById(id);
-
-        if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new InvalidBookingStatusException("Only pending or confirmed bookings can be cancelled");
+        // If cancelling a booking with loyalty discount
+        if (newStatus == BookingStatus.CANCELLED && booking.getDiscountApplied() && preserveLoyalty) {
+            System.out.println("Preserving loyalty discount for booking: " + id);
+            Customer customer = booking.getCustomer();
+            ServiceProvider provider = booking.getProviderService().getServiceProvider();
+            loyaltyService.preserveLoyaltyDiscount(customer, provider);
         }
         
-        booking.setStatus(BookingStatus.CANCELLED);
-        booking.setUpdatedAt(LocalDateTime.now());
+        // Save the status change
+        ServiceBooking updatedBooking = bookingRepository.save(booking);
         
-        bookingRepository.save(booking);
+        // Process completed bookings for loyalty program - must happen after the status is saved
+        if (newStatus == BookingStatus.COMPLETED && currentStatus != BookingStatus.COMPLETED) {
+            System.out.println("Processing completed booking for loyalty program: " + id);
+            loyaltyService.processCompletedBooking(updatedBooking);
+        }
+        
+        return updatedBooking;
+    }
+    
+    // This method is now deprecated - use updateBookingStatus with CANCELLED status instead
+    @Deprecated
+    public void cancelBooking(Long id) {
+        updateBookingStatus(id, BookingStatus.CANCELLED, "Cancelled by system", false);
     }
     
     private void validateStatusTransition(BookingStatus currentStatus, BookingStatus newStatus) {
-        switch (currentStatus) {
-            case PENDING:
-                if (newStatus != BookingStatus.CONFIRMED && 
-                    newStatus != BookingStatus.REJECTED && 
-                    newStatus != BookingStatus.CANCELLED) {
-                    throw new InvalidBookingStatusException(currentStatus, newStatus);
-                }
-                break;
-            case CONFIRMED:
-                if (newStatus != BookingStatus.COMPLETED && 
-                    newStatus != BookingStatus.CANCELLED) {
-                    throw new InvalidBookingStatusException(currentStatus, newStatus);
-                }
-                break;
-            case COMPLETED:
-            case CANCELLED:
-            case REJECTED:
-                throw new InvalidBookingStatusException("Cannot change status from " + currentStatus + " as it is a terminal state");
-            default:
-                throw new InvalidBookingStatusException("Unknown current status: " + currentStatus);
+        if (currentStatus == BookingStatus.CANCELLED || currentStatus == BookingStatus.COMPLETED) {
+            throw new InvalidBookingStatusException(
+                    "Cannot change status of a " + currentStatus.toString().toLowerCase() + " booking"
+            );
+        }
+
+        if (currentStatus == BookingStatus.PENDING && newStatus == BookingStatus.COMPLETED) {
+            throw new InvalidBookingStatusException(
+                    "Cannot mark a pending booking as completed. It must be confirmed first"
+            );
         }
     }
 }

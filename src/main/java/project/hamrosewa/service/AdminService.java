@@ -9,13 +9,18 @@ import project.hamrosewa.dto.AdminDTO;
 import project.hamrosewa.exceptions.UserValidationException;
 import project.hamrosewa.model.Admin;
 import project.hamrosewa.model.Role;
+import project.hamrosewa.model.ServiceBooking;
 import project.hamrosewa.model.User;
 import project.hamrosewa.repository.AdminRepository;
 import project.hamrosewa.repository.RoleRepository;
+import project.hamrosewa.repository.ServiceBookingRepository;
 import project.hamrosewa.repository.UserRepository;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Transactional
@@ -36,6 +41,9 @@ public class AdminService {
 
     @Autowired
     private ImageService imageStorageService;
+
+    @Autowired
+    private ServiceBookingRepository serviceBookingRepository;
 
     public void registerAdmin(AdminDTO adminDTO) throws IOException {
         boolean usernameExists = userRepository.findByUsername(adminDTO.getUsername()).isPresent();
@@ -133,6 +141,8 @@ public class AdminService {
             admin.setImage(fileName);
         }
 
+        admin.setEarnings(calculateAdminEarnings());
+
         adminRepository.save(admin);
     }
 
@@ -179,7 +189,23 @@ public class AdminService {
         adminInfo.put("department", admin.getDepartment());
         adminInfo.put("name", admin.getFullName());
         adminInfo.put("phone", admin.getPhoneNumber());
+        adminInfo.put("earnings", calculateAdminEarnings());
 
         return adminInfo;
     }
+
+    public BigDecimal calculateAdminEarnings() {
+        List<ServiceBooking> completedBookings = serviceBookingRepository.findAllCompletedBookings();
+
+        BigDecimal totalServiceValue = BigDecimal.ZERO;
+
+        for (ServiceBooking booking : completedBookings) {
+            BigDecimal servicePrice = booking.getProviderService().getPrice();
+            totalServiceValue = totalServiceValue.add(servicePrice);
+        }
+
+        BigDecimal adminPercentage = new BigDecimal("0.15");
+        return totalServiceValue.multiply(adminPercentage).setScale(2, RoundingMode.HALF_UP);
+    }
+
 }

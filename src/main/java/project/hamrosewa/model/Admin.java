@@ -5,6 +5,7 @@ import jakarta.persistence.PrimaryKeyJoinColumn;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @EqualsAndHashCode(callSuper = true)
@@ -16,4 +17,6 @@ public class Admin extends User {
     private LocalDate dateOfBirth;
     private String fullName;
     private String department;
+
+    private BigDecimal earnings;
 }

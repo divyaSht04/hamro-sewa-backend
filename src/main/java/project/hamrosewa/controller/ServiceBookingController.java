@@ -58,9 +58,13 @@ public class ServiceBookingController {
     }
     
     @PutMapping("/{id}/status")
-    public ResponseEntity<?> updateBookingStatus(@PathVariable Long id, @RequestParam BookingStatus status) {
+    public ResponseEntity<?> updateBookingStatus(
+            @PathVariable Long id,
+            @RequestParam BookingStatus status,
+            @RequestParam(required = false) String comment,
+            @RequestParam(required = false, defaultValue = "false") boolean preserveLoyalty) {
         try {
-            ServiceBooking booking = bookingService.updateBookingStatus(id, status);
+            ServiceBooking booking = bookingService.updateBookingStatus(id, status, comment, preserveLoyalty);
             return new ResponseEntity<>(booking, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -70,7 +74,8 @@ public class ServiceBookingController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> cancelBooking(@PathVariable Long id) {
         try {
-            bookingService.cancelBooking(id);
+            // Use the updateBookingStatus method instead of deprecated cancelBooking
+            bookingService.updateBookingStatus(id, BookingStatus.CANCELLED, "Cancelled by system", false);
             return new ResponseEntity<>("Booking cancelled successfully", HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);

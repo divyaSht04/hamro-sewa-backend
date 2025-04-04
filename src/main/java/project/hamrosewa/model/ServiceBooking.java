@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -34,6 +35,21 @@ public class ServiceBooking {
     @OneToOne(mappedBy = "booking", cascade = CascadeType.REFRESH, orphanRemoval = false)
     @JsonIgnore
     private Review review;
+    
+    @Column(name = "status_comment")
+    private String statusComment;
+    
+    @Column(name = "discount_applied")
+    private Boolean discountApplied = false;
+    
+    @Column(name = "discount_percentage")
+    private BigDecimal discountPercentage;
+    
+    @Column(name = "original_price")
+    private BigDecimal originalPrice;
+    
+    @Column(name = "discounted_price")
+    private BigDecimal discountedPrice;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -23,4 +24,15 @@ public class ServiceBookingDTO {
     private LocalDateTime bookingDateTime;
     
     private String bookingNotes;
+    
+    private Boolean discountApplied;
+    
+    private BigDecimal discountPercentage;
+    
+    private BigDecimal originalPrice;
+    
+    private BigDecimal discountedPrice;
+    
+    // Additional field for loyalty program information
+    private Integer completedBookingsCount;
 }
