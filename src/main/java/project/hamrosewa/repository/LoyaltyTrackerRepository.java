@@ -7,13 +7,6 @@ import java.util.Optional;
 
 @Repository
 public interface LoyaltyTrackerRepository extends JpaRepository<LoyaltyTracker, Long> {
-    
-    /**
-     * Find loyalty tracker by customer and service provider
-     * 
-     * @param customerId customer ID
-     * @param serviceProviderId service provider ID
-     * @return optional loyalty tracker
-     */
+
     Optional<LoyaltyTracker> findByCustomerIdAndServiceProviderId(int customerId, int serviceProviderId);
 }

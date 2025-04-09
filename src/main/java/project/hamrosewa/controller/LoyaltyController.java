@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/loyalty")
+@RequestMapping("loyalty")
 public class LoyaltyController {
 
     @Autowired
@@ -32,19 +32,12 @@ public class LoyaltyController {
     
     @Autowired
     private ServiceBookingRepository bookingRepository;
-    
-    /**
-     * Get a customer's loyalty progress with a specific service provider
-     * 
-     * @param customerId the customer ID
-     * @param serviceProviderId the service provider ID
-     * @return the loyalty progress information
-     */
+
     @GetMapping("/progress/{customerId}/{serviceProviderId}")
     public ResponseEntity<?> getLoyaltyProgress(
             @PathVariable Integer customerId,
             @PathVariable Integer serviceProviderId) {
-        
+            
         try {
             Customer customer = customerRepository.findById(customerId)
                     .orElseThrow(() -> new RuntimeException("Customer not found"));
@@ -61,7 +54,7 @@ public class LoyaltyController {
             response.put("completedBookings", completedBookings);
             response.put("bookingsNeededForDiscount", completedBookings >= 4 ? 0 : 4 - completedBookings);
             response.put("eligibleForDiscount", eligibleForDiscount);
-            response.put("discountEligible", eligibleForDiscount); // Add discountEligible flag for frontend compatibility
+            response.put("discountEligible", eligibleForDiscount);
             response.put("discountPercentage", 20);
             
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -71,13 +64,7 @@ public class LoyaltyController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
-    /**
-     * Get a customer's loyalty progress across all service providers
-     * 
-     * @param customerId the customer ID
-     * @return the loyalty progress information for all service providers
-     */
+
     @GetMapping("/progress/customer/{customerId}")
     public ResponseEntity<?> getAllLoyaltyProgress(@PathVariable Integer customerId) {
         try {
@@ -108,14 +95,7 @@ public class LoyaltyController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
-    /**
-     * Debug endpoint to fix the loyalty tracker data in the system
-     * This will recalculate the loyalty status based on completed bookings
-     * 
-     * @param customerId the customer ID
-     * @return status of the fix operation
-     */
+
     @PostMapping("/fix/{customerId}")
     public ResponseEntity<?> fixLoyaltyTracking(@PathVariable Integer customerId) {
         try {
@@ -129,8 +109,7 @@ public class LoyaltyController {
                 loyaltyService.resetLoyaltyCounter(customer, provider);
 
                 int fixedCount = 0;
-                for (ServiceBooking booking : bookingRepository.findCompletedBookingsByCustomerAndProvider(
-                        customer.getId(), provider.getId())) {
+                for (ServiceBooking booking : bookingRepository.findCompletedBookingsByCustomerAndProvider(customer.getId(), provider.getId())) {
                     loyaltyService.processCompletedBooking(booking);
                     fixedCount++;
                 }

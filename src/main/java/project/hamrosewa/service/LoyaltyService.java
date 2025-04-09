@@ -23,18 +23,19 @@ public class LoyaltyService {
     @Autowired
     private LoyaltyTrackerRepository loyaltyTrackerRepository;
 
-    /**
-     * Process a completed booking to update loyalty tracking
-     *
-     * @param booking the completed booking
-     */
     @Transactional
     public void processCompletedBooking(ServiceBooking booking) {
         System.out.println("Processing completed booking: " + booking.getId());
         
         if (booking.getStatus() != BookingStatus.COMPLETED) {
             System.out.println("Booking status is not COMPLETED, skipping loyalty processing");
-            return; // Only process completed bookings
+            return;
+        }
+        
+        // Skip bookings that had a loyalty discount applied
+        if (booking.getDiscountApplied() != null && booking.getDiscountApplied()) {
+            System.out.println("Booking " + booking.getId() + " had loyalty discount applied, not counting toward next discount");
+            return;
         }
 
         Customer customer = booking.getCustomer();
@@ -44,8 +45,7 @@ public class LoyaltyService {
 
         LoyaltyTracker tracker = getOrCreateLoyaltyTracker(customer, serviceProvider);
         int oldCount = tracker.getCompletedBookingsCount();
-        
-        // Increment completed bookings count
+
         tracker.setCompletedBookingsCount(oldCount + 1);
         System.out.println("Incrementing loyalty counter from " + oldCount + " to " + tracker.getCompletedBookingsCount());
         
@@ -54,26 +54,11 @@ public class LoyaltyService {
         System.out.println("Loyalty tracker saved successfully");
     }
 
-    /**
-     * Check if a discount should be applied for this booking
-     *
-     * @param customer the customer making the booking
-     * @param serviceProvider the service provider
-     * @return true if discount should be applied, false otherwise
-     */
     public boolean shouldApplyDiscount(Customer customer, ServiceProvider serviceProvider) {
         LoyaltyTracker tracker = getOrCreateLoyaltyTracker(customer, serviceProvider);
-        // Customer is eligible for discount when they reach 4 completed bookings
-        // (discount applies on 5th booking and beyond)
         return tracker.getCompletedBookingsCount() >= BOOKINGS_REQUIRED_FOR_DISCOUNT;
     }
 
-    /**
-     * Calculate the discounted price
-     *
-     * @param originalPrice the original price
-     * @return the discounted price
-     */
     public BigDecimal calculateDiscountedPrice(BigDecimal originalPrice) {
         if (originalPrice == null) {
             return BigDecimal.ZERO;
@@ -83,25 +68,11 @@ public class LoyaltyService {
         return originalPrice.subtract(discountAmount).setScale(2, RoundingMode.HALF_UP);
     }
 
-    /**
-     * Get the number of completed bookings for a customer with a specific service provider
-     *
-     * @param customer the customer
-     * @param serviceProvider the service provider
-     * @return the number of completed bookings
-     */
     public int getCompletedBookingsCount(Customer customer, ServiceProvider serviceProvider) {
         LoyaltyTracker tracker = getOrCreateLoyaltyTracker(customer, serviceProvider);
         return tracker.getCompletedBookingsCount();
     }
 
-    /**
-     * Get a loyalty tracker or create a new one if it doesn't exist
-     *
-     * @param customer the customer
-     * @param serviceProvider the service provider
-     * @return the loyalty tracker
-     */
     private LoyaltyTracker getOrCreateLoyaltyTracker(Customer customer, ServiceProvider serviceProvider) {
         Optional<LoyaltyTracker> existingTracker = loyaltyTrackerRepository.findByCustomerIdAndServiceProviderId(
                 customer.getId(), serviceProvider.getId());
@@ -116,14 +87,7 @@ public class LoyaltyService {
         newTracker.setCompletedBookingsCount(0);
         return loyaltyTrackerRepository.save(newTracker);
     }
-    
-    /**
-     * Preserve loyalty discount when a booking is cancelled
-     * This ensures the customer can still use their earned discount
-     *
-     * @param customer the customer
-     * @param serviceProvider the service provider
-     */
+
     @Transactional
     public void preserveLoyaltyDiscount(Customer customer, ServiceProvider serviceProvider) {
         LoyaltyTracker tracker = getOrCreateLoyaltyTracker(customer, serviceProvider);
