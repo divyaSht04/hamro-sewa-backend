@@ -14,6 +14,7 @@ import project.hamrosewa.repository.ProviderServiceRepository;
 import project.hamrosewa.repository.ServiceBookingRepository;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -30,6 +31,9 @@ public class ServiceBookingService {
     
     @Autowired
     private LoyaltyService loyaltyService;
+    
+    @Autowired
+    private EmailService emailService;
     
     @Transactional
     public ServiceBooking createBooking(ServiceBookingDTO bookingDTO) {
@@ -70,7 +74,32 @@ public class ServiceBookingService {
             booking.setDiscountedPrice(providerService.getPrice());
         }
         
-        return bookingRepository.save(booking);
+        // Save the booking first
+        ServiceBooking savedBooking = bookingRepository.save(booking);
+        
+        // Send booking confirmation email
+        try {
+            String formattedDateTime = booking.getBookingDateTime().format(
+                DateTimeFormatter.ofPattern("MMMM dd, yyyy HH:mm"));
+            String formattedPrice = booking.getDiscountApplied() ? 
+                booking.getDiscountedPrice().toString() + " (with 20% loyalty discount)" : 
+                booking.getOriginalPrice().toString();
+                
+            emailService.sendBookingConfirmationEmail(
+                customer.getEmail(),
+                customer.getUsername(),
+                savedBooking.getId(),
+                providerService.getServiceName(),
+                formattedDateTime,
+                formattedPrice,
+                providerService.getServiceProvider().getBusinessName()
+            );
+        } catch (Exception e) {
+            // Log the error but don't fail the booking creation
+            System.out.println("Failed to send booking confirmation email: " + e.getMessage());
+        }
+        
+        return savedBooking;
     }
     
     public ServiceBooking getBookingById(Long id) {
@@ -99,8 +128,7 @@ public class ServiceBookingService {
         System.out.println("Current status: " + currentStatus);
 
         validateStatusTransition(currentStatus, newStatus);
-        
-        // Set the new status first so that loyalty processing sees the correct status
+
         booking.setStatus(newStatus);
         booking.setStatusComment(comment);
         booking.setUpdatedAt(LocalDateTime.now());
@@ -120,6 +148,27 @@ public class ServiceBookingService {
         if (newStatus == BookingStatus.COMPLETED && currentStatus != BookingStatus.COMPLETED) {
             System.out.println("Processing completed booking for loyalty program: " + id);
             loyaltyService.processCompletedBooking(updatedBooking);
+            
+            // Send booking completion email
+            try {
+                Customer customer = updatedBooking.getCustomer();
+                ProviderService service = updatedBooking.getProviderService();
+                String completionTime = LocalDateTime.now()
+                        .format(DateTimeFormatter.ofPattern("MMMM dd, yyyy HH:mm"));
+                
+                emailService.sendBookingCompletionEmail(
+                    customer.getEmail(),
+                    customer.getUsername(),
+                    updatedBooking.getId(),
+                    service.getServiceName(),
+                    completionTime
+                );
+                
+                System.out.println("Booking completion email sent to " + customer.getEmail());
+            } catch (Exception e) {
+                // Log the error but don't fail the booking status update
+                System.out.println("Failed to send booking completion email: " + e.getMessage());
+            }
         }
         
         return updatedBooking;

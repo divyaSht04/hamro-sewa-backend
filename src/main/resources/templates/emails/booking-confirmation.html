@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #6a0dad;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .booking-details {
+            background-color: white;
+            border: 1px solid #eee;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Booking Confirmation</h1>
+    </div>
+    <div class="content">
+        <p>Dear <span th:text="${name}">Customer</span>,</p>
+        <p>Thank you for booking a service with Hamro Sewa! Your booking has been confirmed.</p>
+        
+        <div class="booking-details">
+            <h3>Booking Details</h3>
+            <table>
+                <tr>
+                    <th>Booking ID</th>
+                    <td th:text="${bookingId}">123456</td>
+                </tr>
+                <tr>
+                    <th>Service</th>
+                    <td th:text="${serviceName}">Home Cleaning</td>
+                </tr>
+                <tr>
+                    <th>Service Provider</th>
+                    <td th:text="${providerName}">Provider Name</td>
+                </tr>
+                <tr>
+                    <th>Date & Time</th>
+                    <td th:text="${bookingDateTime}">January 15, 2025 14:00</td>
+                </tr>
+                <tr>
+                    <th>Price</th>
+                    <td th:text="${price}">Rs. 2500.00</td>
+                </tr>
+            </table>
+        </div>
+        
+        <p>Your service provider will contact you prior to the appointment if there are any changes or questions.</p>
+        
+        <p>You can view your booking details and status anytime by logging into your Hamro Sewa account.</p>
+        
+        <p>Thank you for choosing Hamro Sewa!</p>
+        
+        <p>Best regards,<br>The Hamro Sewa Team</p>
+    </div>
+    <div class="footer">
+        <p>&copy; <span th:text="${currentYear}">2025</span> Hamro Sewa. All rights reserved.</p>
+        <p>This is an automated message, please do not reply to this email.</p>
+    </div>
+</body>
+</html>

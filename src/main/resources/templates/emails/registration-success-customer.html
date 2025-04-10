@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to HamroSewa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+        }
+        .footer {
+            background-color: #f1f1f1;
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+            border-radius: 0 0 5px 5px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Welcome to HamroSewa!</h2>
+        </div>
+        <div class="content">
+            <p>Hello <strong th:text="${username}"></strong>,</p>
+            
+            <p>Thank you for registering as a customer on HamroSewa! Your account has been successfully created and you can now access our platform to find and book services.</p>
+            
+            <p>Account Details:</p>
+            <ul>
+                <li>Username: <strong th:text="${username}"></strong></li>
+                <li>Email: <strong th:text="${email}"></strong></li>
+                <li>Registration Date: <strong th:text="${registrationDate}"></strong></li>
+            </ul>
+            
+            <p>With your new account, you can:</p>
+            <ul>
+                <li>Browse available services from our verified service providers</li>
+                <li>Book services at your convenience</li>
+                <li>Track your bookings and service history</li>
+                <li>Write reviews for completed services</li>
+            </ul>
+            
+            <a href="http://localhost:3000/login" class="button">Login to Your Account</a>
+            
+            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+            
+            <p>Best regards,<br>
+            The HamroSewa Team</p>
+        </div>
+        <div class="footer">
+            <p>&copy; <span th:text="${currentYear}"></span> HamroSewa. All rights reserved.</p>
+            <p>This email was sent to <span th:text="${email}"></span></p>
+        </div>
+    </div>
+</body>
+</html>
