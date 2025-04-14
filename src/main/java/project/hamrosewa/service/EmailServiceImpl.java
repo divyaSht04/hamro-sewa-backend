@@ -193,4 +193,24 @@ public class EmailServiceImpl implements EmailService {
         context.setVariables(model);
         return templateEngine.process("emails/" + templateName, context);
     }
+    
+    @Override
+    @Async
+    public void sendOTPVerificationEmail(String to, String username, String otp, int expiryMinutes) {
+        try {
+            Map<String, Object> templateModel = new HashMap<>();
+            templateModel.put("username", username);
+            templateModel.put("otp", otp);
+            templateModel.put("expiryMinutes", expiryMinutes);
+            templateModel.put("currentYear", LocalDateTime.now().getYear());
+            
+            String htmlContent = processTemplate("email-verification", templateModel);
+            sendHtmlEmail(to, "Email Verification - HamroSewa", htmlContent);
+            
+            logger.info("OTP verification email sent to {}", to);
+        } catch (Exception e) {
+            logger.error("Failed to send OTP verification email: {}", e.getMessage());
+            // No exception re-throw to prevent stack overflow in @Async method
+        }
+    }
 }

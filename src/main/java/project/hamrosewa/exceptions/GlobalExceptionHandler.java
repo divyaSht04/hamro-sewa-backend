@@ -11,6 +11,15 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler({OTPVerificationException.class})
+    public ResponseEntity<Map<String, Object>> handleOTPVerificationException(OTPVerificationException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "error");
+        response.put("message", ex.getMessage());
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
     @ExceptionHandler({UserValidationException.class})
     public ResponseEntity<?> handleUserValidationException(UserValidationException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.CONFLICT);

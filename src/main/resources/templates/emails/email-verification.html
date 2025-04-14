@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - HamroSewa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .otp-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .otp {
+            display: inline-block;
+            padding: 10px 30px;
+            background-color: #f2f2f2;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            border-radius: 5px;
+            color: #333;
+        }
+        .note {
+            font-size: 14px;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Email Verification</h1>
+    </div>
+    
+    <div class="content">
+        <p>Dear <span th:text="${username}">User</span>,</p>
+        
+        <p>Thank you for registering with HamroSewa. To complete your registration, please use the following verification code:</p>
+        
+        <div class="otp-container">
+            <div class="otp" th:text="${otp}">123456</div>
+        </div>
+        
+        <p>This code is valid for <span th:text="${expiryMinutes}">10</span> minutes. Please do not share this code with anyone.</p>
+        
+        <p class="note">If you did not request this verification, please ignore this email.</p>
+        
+        <p>Best regards,<br>
+        The HamroSewa Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>&copy; <span th:text="${currentYear}">2025</span> HamroSewa. All rights reserved.</p>
+    </div>
+</body>
+</html>

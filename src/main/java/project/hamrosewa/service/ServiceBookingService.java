@@ -64,9 +64,7 @@ public class ServiceBookingService {
             booking.setOriginalPrice(providerService.getPrice());
             booking.setDiscountedPrice(
                     loyaltyService.calculateDiscountedPrice(providerService.getPrice()));
-            
-            // Reset the loyalty counter after applying the discount
-            // This needs to happen at booking creation, not when the booking is completed
+
             loyaltyService.resetLoyaltyCounter(customer, providerService.getServiceProvider());
         } else {
             booking.setDiscountApplied(false);
@@ -132,39 +130,54 @@ public class ServiceBookingService {
         booking.setStatus(newStatus);
         booking.setStatusComment(comment);
         booking.setUpdatedAt(LocalDateTime.now());
-        
-        // If cancelling a booking with loyalty discount
-        if (newStatus == BookingStatus.CANCELLED && booking.getDiscountApplied() && preserveLoyalty) {
+
+        if (newStatus == BookingStatus.CANCELLED && booking.getDiscountApplied() != null && 
+                booking.getDiscountApplied() && preserveLoyalty) {
             System.out.println("Preserving loyalty discount for booking: " + id);
             Customer customer = booking.getCustomer();
             ServiceProvider provider = booking.getProviderService().getServiceProvider();
-            loyaltyService.preserveLoyaltyDiscount(customer, provider);
+            try {
+                loyaltyService.preserveLoyaltyDiscount(customer, provider);
+            } catch (Exception e) {
+                System.out.println("Error preserving loyalty discount: " + e.getMessage());
+                // Continue with the status update even if loyalty preservation fails
+            }
         }
         
         // Save the status change
         ServiceBooking updatedBooking = bookingRepository.save(booking);
-        
-        // Process completed bookings for loyalty program - must happen after the status is saved
-        if (newStatus == BookingStatus.COMPLETED && currentStatus != BookingStatus.COMPLETED) {
+
+        if (newStatus == BookingStatus.COMPLETED) {
             System.out.println("Processing completed booking for loyalty program: " + id);
-            loyaltyService.processCompletedBooking(updatedBooking);
-            
-            // Send booking completion email
+            try {
+                loyaltyService.processCompletedBooking(updatedBooking);
+            } catch (Exception e) {
+                System.out.println("Error processing completed booking for loyalty: " + e.getMessage());
+            }
+
             try {
                 Customer customer = updatedBooking.getCustomer();
-                ProviderService service = updatedBooking.getProviderService();
-                String completionTime = LocalDateTime.now()
-                        .format(DateTimeFormatter.ofPattern("MMMM dd, yyyy HH:mm"));
-                
-                emailService.sendBookingCompletionEmail(
-                    customer.getEmail(),
-                    customer.getUsername(),
-                    updatedBooking.getId(),
-                    service.getServiceName(),
-                    completionTime
-                );
-                
-                System.out.println("Booking completion email sent to " + customer.getEmail());
+                if (customer != null && customer.getEmail() != null) {
+                    ProviderService service = updatedBooking.getProviderService();
+                    if (service != null && service.getServiceName() != null) {
+                        String completionTime = LocalDateTime.now()
+                                .format(DateTimeFormatter.ofPattern("MMMM dd, yyyy HH:mm"));
+                    
+                        emailService.sendBookingCompletionEmail(
+                            customer.getEmail(),
+                            customer.getUsername(),
+                            updatedBooking.getId(),
+                            service.getServiceName(),
+                            completionTime
+                        );
+                    
+                        System.out.println("Booking completion email sent to " + customer.getEmail());
+                    } else {
+                        System.out.println("Cannot send email: Service or service name is null");
+                    }
+                } else {
+                    System.out.println("Cannot send email: Customer or customer email is null");
+                }
             } catch (Exception e) {
                 // Log the error but don't fail the booking status update
                 System.out.println("Failed to send booking completion email: " + e.getMessage());

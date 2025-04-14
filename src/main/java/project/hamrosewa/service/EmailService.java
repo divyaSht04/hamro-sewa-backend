@@ -77,4 +77,14 @@ public interface EmailService {
      * @param registrationDate date of registration
      */
     void sendProviderRegistrationEmail(String to, String username, String businessName, String registrationDate);
+    
+    /**
+     * Send email verification OTP
+     * 
+     * @param to recipient email address
+     * @param username recipient's username
+     * @param otp the one-time password for verification
+     * @param expiryMinutes minutes until the OTP expires
+     */
+    void sendOTPVerificationEmail(String to, String username, String otp, int expiryMinutes);
 }
