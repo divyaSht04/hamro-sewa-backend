@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import project.hamrosewa.dto.ProviderServiceDTO;
 import project.hamrosewa.exceptions.ProviderServiceException;
 import project.hamrosewa.model.*;
+import project.hamrosewa.model.Notification.NotificationType;
+import project.hamrosewa.repository.AdminRepository;
 import project.hamrosewa.repository.ProviderServiceRepository;
 import project.hamrosewa.repository.ServiceProviderRepository;
 import project.hamrosewa.repository.ReviewRepository;
@@ -34,6 +36,12 @@ public class ProviderServiceService {
 
     @Autowired
     private ReviewRepository reviewRepository;
+    
+    @Autowired
+    private NotificationService notificationService;
+    
+    @Autowired
+    private AdminRepository adminRepository;
 
     public ProviderService createService(ProviderServiceDTO serviceDTO) throws IOException {
         ServiceProvider provider = serviceProviderRepository.findById(serviceDTO.getServiceProviderId())
@@ -52,8 +60,29 @@ public class ProviderServiceService {
             String imagePath = imageService.saveImage(serviceDTO.getImage());
             service.setImagePath(imagePath);
         }
-
-        return providerServiceRepository.save(service);
+        
+        ProviderService savedService = providerServiceRepository.save(service);
+        if (savedService.getStatus() == ServiceStatus.PENDING) {
+            List<Admin> admins = adminRepository.findAll();
+            for (Admin admin : admins) {
+                try {
+                    Long adminId = (long) admin.getId();
+                        notificationService.createNotification(
+                            "New service pending approval: '" + savedService.getServiceName() + "' by " +
+                            provider.getBusinessName() + " (" + provider.getUsername() + ")",
+                            NotificationType.SERVICE_PENDING,
+                            "/admin/services/pending",
+                            adminId,
+                            UserType.ADMIN
+                        );
+                } catch (Exception e) {
+                    System.err.println("Could not create notification for admin ID: " + admin.getId() + " - " + e.getMessage());
+                }
+                break;
+            }
+        }
+        
+        return savedService;
     }
 
     public ProviderService updateService(Long serviceId, ProviderServiceDTO serviceDTO) throws IOException {
@@ -135,8 +164,23 @@ public class ProviderServiceService {
         if (service.getImagePath() != null) {
             imageService.deleteImage(service.getImagePath());
         }
-
+        
+        // Store service provider info before deleting the service
+        ServiceProvider serviceProvider = service.getServiceProvider();
+        String serviceName = service.getServiceName();
+        
+        // Delete the service
         providerServiceRepository.delete(service);
+        
+        // Notify service provider about the service deletion
+        notificationService.createNotification(
+            "Your service '" + serviceName + "' has been deleted by an administrator. "
+            + "Please contact support if you have any questions.",
+            NotificationType.SERVICE_REJECTED,
+            "/provider/services",
+            Long.valueOf(serviceProvider.getId()),
+            UserType.SERVICE_PROVIDER
+        );
     }
 
     public ProviderService getServiceById(Long serviceId) {
@@ -168,7 +212,20 @@ public class ProviderServiceService {
             service.setAdminFeedback(feedback);
         }
         
-        return providerServiceRepository.save(service);
+        ProviderService savedService = providerServiceRepository.save(service);
+        
+        // Send notification to the service provider about the service approval
+        notificationService.createNotification(
+            "Your service '" + service.getServiceName() + "' has been approved" + 
+            (feedback != null && !feedback.trim().isEmpty() ? " with feedback: " + feedback : "") +
+            ". Your service is now live and available for bookings. Remember that customers can earn a loyalty discount after 4 completed bookings of your services.",
+            NotificationType.SERVICE_APPROVED,
+            "/provider/services",
+            Long.valueOf(service.getServiceProvider().getId()),
+            UserType.SERVICE_PROVIDER
+        );
+        
+        return savedService;
     }
 
     public ProviderService rejectService(Long serviceId, String feedback) {
@@ -177,8 +234,23 @@ public class ProviderServiceService {
         
         service.setStatus(ServiceStatus.REJECTED);
         service.setAdminFeedback(feedback);
+        ProviderService savedService = providerServiceRepository.save(service);
         
-        return providerServiceRepository.save(service);
+        // Log the rejection
+        System.out.println("Service rejected: " + savedService.getServiceName() + ", ID: " + savedService.getId());
+        
+        // Send notification to the service provider about the service rejection
+        notificationService.createNotification(
+            "Your service '" + service.getServiceName() + "' has been rejected" + 
+            (feedback != null && !feedback.trim().isEmpty() ? " with reason: " + feedback : "") +
+            ". Please review the feedback and resubmit your service with the necessary changes.",
+            NotificationType.SERVICE_REJECTED,
+            "/provider/services",
+            Long.valueOf(service.getServiceProvider().getId()),
+            UserType.SERVICE_PROVIDER
+        );
+        
+        return savedService;
     }
 
     public List<ProviderService> getServicesByStatus(ServiceStatus status) {

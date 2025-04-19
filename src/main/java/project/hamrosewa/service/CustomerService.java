@@ -7,9 +7,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.CustomerDTO;
 import project.hamrosewa.exceptions.UserValidationException;
+import project.hamrosewa.model.Admin;
 import project.hamrosewa.model.Customer;
+import project.hamrosewa.model.Notification.NotificationType;
 import project.hamrosewa.model.Role;
 import project.hamrosewa.model.User;
+import project.hamrosewa.model.UserType;
+import project.hamrosewa.repository.AdminRepository;
 import project.hamrosewa.repository.CustomerRepository;
 import project.hamrosewa.repository.RoleRepository;
 import project.hamrosewa.repository.UserRepository;
@@ -33,8 +37,15 @@ public class CustomerService {
 
     @Autowired
     private ImageService imageStorageService;
+    
     @Autowired
     private CustomerRepository customerRepository;
+    
+    @Autowired
+    private NotificationService notificationService;
+    
+    @Autowired
+    private AdminRepository adminRepository;
 
     @Transactional
     public void registerCustomer(CustomerDTO customerDTO) throws IOException {
@@ -69,7 +80,19 @@ public class CustomerService {
         Role userRole = roleRepository.findByName("ROLE_CUSTOMER");
         customer.setRole(userRole);
         customer.setFullName(customerDTO.getFullName());
-        userRepository.save(customer);
+        customer = userRepository.save(customer);
+        
+        // Send notification to all admin users about new customer registration
+        List<Admin> admins = adminRepository.findAll();
+        for (Admin admin : admins) {
+            notificationService.createNotification(
+                "New customer registered: " + customer.getFullName() + " (" + customer.getUsername() + ")",
+                NotificationType.ACCOUNT_CREATED,
+                "/admin/customers",
+                Long.valueOf(admin.getId()),
+                UserType.ADMIN
+            );
+        }
     }
 
     public List<Customer> getCustomerInfo(long customerId) {

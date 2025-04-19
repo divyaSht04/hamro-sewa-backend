@@ -6,8 +6,10 @@ import org.springframework.transaction.annotation.Transactional;
 import project.hamrosewa.model.BookingStatus;
 import project.hamrosewa.model.Customer;
 import project.hamrosewa.model.LoyaltyTracker;
+import project.hamrosewa.model.Notification.NotificationType;
 import project.hamrosewa.model.ServiceBooking;
 import project.hamrosewa.model.ServiceProvider;
+import project.hamrosewa.model.UserType;
 import project.hamrosewa.repository.LoyaltyTrackerRepository;
 
 import java.math.BigDecimal;
@@ -22,6 +24,9 @@ public class LoyaltyService {
 
     @Autowired
     private LoyaltyTrackerRepository loyaltyTrackerRepository;
+    
+    @Autowired
+    private NotificationService notificationService;
 
     @Transactional
     public void processCompletedBooking(ServiceBooking booking) {
@@ -52,6 +57,19 @@ public class LoyaltyService {
         // Save the updated tracker
         loyaltyTrackerRepository.save(tracker);
         System.out.println("Loyalty tracker saved successfully");
+        
+        // Check if the customer has now become eligible for a discount
+        if (tracker.getCompletedBookingsCount() == BOOKINGS_REQUIRED_FOR_DISCOUNT) {
+            // Send notification to the customer about the newly available discount
+            notificationService.createNotification(
+                "Congratulations! You're eligible for a 20% loyalty discount on your next booking with " + 
+                serviceProvider.getBusinessName(),
+                NotificationType.LOYALTY_DISCOUNT,
+                "/customer/bookings/new",
+                Long.valueOf(customer.getId()),
+                UserType.CUSTOMER
+            );
+        }
     }
 
     public boolean shouldApplyDiscount(Customer customer, ServiceProvider serviceProvider) {

@@ -32,7 +32,12 @@ public class ServiceBookingDTO {
     private BigDecimal originalPrice;
     
     private BigDecimal discountedPrice;
-    
-    // Additional field for loyalty program information
+
     private Integer completedBookingsCount;
+
+    private Boolean applyLoyaltyDiscount;
+
+    private BigDecimal findPrice;
+
+    private BigDecimal finalPrice;
 }

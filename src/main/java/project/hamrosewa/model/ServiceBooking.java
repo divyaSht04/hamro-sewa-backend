@@ -11,16 +11,19 @@ import java.time.LocalDateTime;
 @Data
 @Table(name = "service_bookings")
 public class ServiceBooking {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
+    @JsonIgnore
     private Customer customer;
     
     @ManyToOne
     @JoinColumn(name = "provider_service_id", nullable = false)
+    @JsonIgnore
     private ProviderService providerService;
     
     @Column(nullable = false)

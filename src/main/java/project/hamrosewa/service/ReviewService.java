@@ -6,6 +6,7 @@ import project.hamrosewa.dto.ReviewDTO;
 import project.hamrosewa.exceptions.BookingNotFoundException;
 import project.hamrosewa.exceptions.ReviewValidationException;
 import project.hamrosewa.model.*;
+import project.hamrosewa.model.Notification.NotificationType;
 import project.hamrosewa.repository.CustomerRepository;
 import project.hamrosewa.repository.ProviderServiceRepository;
 import project.hamrosewa.repository.ReviewRepository;
@@ -28,6 +29,9 @@ public class ReviewService {
     
     @Autowired
     private ProviderServiceRepository providerServiceRepository;
+    
+    @Autowired
+    private NotificationService notificationService;
     
     public Review createReview(ReviewDTO reviewDTO) {
         // Validate booking exists
@@ -74,6 +78,15 @@ public class ReviewService {
 
         booking.setReview(savedReview);
         bookingRepository.save(booking);
+        
+        // Send notification to the service provider about the new review
+        notificationService.createNotification(
+            "New review for your service '" + providerService.getServiceName() + "' - Rating: " + reviewDTO.getRating() + " stars",
+            NotificationType.NEW_REVIEW,
+            "/service-provider/reviews",
+            Long.valueOf(providerService.getServiceProvider().getId()),
+            UserType.SERVICE_PROVIDER
+        );
         
         return savedReview;
     }

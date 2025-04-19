@@ -1,5 +1,6 @@
 package project.hamrosewa.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -15,14 +16,17 @@ public class Review {
 
     @ManyToOne
     @JoinColumn(name = "CUSTOMER_ID", nullable = false)
+    @JsonIgnore
     private Customer customer;
 
     @ManyToOne
     @JoinColumn(name = "PROVIDER_SERVICE_ID", nullable = false)
+    @JsonIgnore
     private ProviderService providerService;
 
     @OneToOne
     @JoinColumn(name = "BOOKING_ID", nullable = false, unique = true)
+    @JsonIgnore
     private ServiceBooking booking;
 
     @Column(name = "RATING", nullable = false)

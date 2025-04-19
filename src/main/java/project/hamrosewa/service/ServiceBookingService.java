@@ -9,6 +9,7 @@ import project.hamrosewa.exceptions.InvalidBookingStatusException;
 import project.hamrosewa.exceptions.ProviderServiceException;
 import project.hamrosewa.exceptions.UserValidationException;
 import project.hamrosewa.model.*;
+import project.hamrosewa.model.Notification.NotificationType;
 import project.hamrosewa.repository.CustomerRepository;
 import project.hamrosewa.repository.ProviderServiceRepository;
 import project.hamrosewa.repository.ServiceBookingRepository;
@@ -35,6 +36,9 @@ public class ServiceBookingService {
     @Autowired
     private EmailService emailService;
     
+    @Autowired
+    private NotificationService notificationService;
+    
     @Transactional
     public ServiceBooking createBooking(ServiceBookingDTO bookingDTO) {
         Customer customer = customerRepository.findById(Math.toIntExact(bookingDTO.getCustomerId()))
@@ -54,9 +58,13 @@ public class ServiceBookingService {
         booking.setBookingNotes(bookingDTO.getBookingNotes());
         booking.setStatus(BookingStatus.PENDING);
         
-        // Check if the customer is eligible for a loyalty discount
-        boolean shouldApplyDiscount = loyaltyService.shouldApplyDiscount(
+        // Check if the customer is eligible for a loyalty discount and wants to apply it
+        boolean customerEligibleForDiscount = loyaltyService.shouldApplyDiscount(
                 customer, providerService.getServiceProvider());
+        
+        // Only apply the discount if the customer is eligible AND has chosen to apply it
+        boolean shouldApplyDiscount = customerEligibleForDiscount && 
+                (bookingDTO.getApplyLoyaltyDiscount() != null && bookingDTO.getApplyLoyaltyDiscount());
         
         if (shouldApplyDiscount) {
             booking.setDiscountApplied(true);
@@ -65,6 +73,26 @@ public class ServiceBookingService {
             booking.setDiscountedPrice(
                     loyaltyService.calculateDiscountedPrice(providerService.getPrice()));
 
+            // Send notification about applied loyalty discount to customer
+            notificationService.createNotification(
+                "20% loyalty discount applied to your booking for " + providerService.getServiceName() + 
+                ". You saved $" + booking.getOriginalPrice().subtract(booking.getDiscountedPrice()),
+                NotificationType.LOYALTY_DISCOUNT,
+                "/customer/bookings",
+                Long.valueOf(customer.getId()),
+                UserType.CUSTOMER
+            );
+            
+            // Send notification to service provider about a booking with loyalty discount
+            notificationService.createNotification(
+                "New booking with 20% loyalty discount from " + customer.getFullName() + 
+                " for your service " + providerService.getServiceName(),
+                NotificationType.BOOKING_CREATED,
+                "/provider/bookings",
+                Long.valueOf(providerService.getServiceProvider().getId()),
+                UserType.SERVICE_PROVIDER
+            );
+            
             loyaltyService.resetLoyaltyCounter(customer, providerService.getServiceProvider());
         } else {
             booking.setDiscountApplied(false);
@@ -92,6 +120,25 @@ public class ServiceBookingService {
                 formattedPrice,
                 providerService.getServiceProvider().getBusinessName()
             );
+            
+            // Send real-time notification to the customer
+            notificationService.createNotification(
+                "Your booking for " + providerService.getServiceName() + " has been created",
+                NotificationType.BOOKING_CREATED,
+                "/customer/bookings",
+                Long.valueOf(customer.getId()),
+                UserType.CUSTOMER
+            );
+            
+            // Send real-time notification to the service provider
+            notificationService.createNotification(
+                "New booking request for " + providerService.getServiceName(),
+                NotificationType.BOOKING_CREATED,
+                "/service-provider/bookings",
+                Long.valueOf(providerService.getServiceProvider().getId()),
+                UserType.SERVICE_PROVIDER
+            );
+            
         } catch (Exception e) {
             // Log the error but don't fail the booking creation
             System.out.println("Failed to send booking confirmation email: " + e.getMessage());
@@ -118,10 +165,10 @@ public class ServiceBookingService {
     }
     
     @Transactional
-    public ServiceBooking updateBookingStatus(Long id, BookingStatus newStatus, String comment, boolean preserveLoyalty) {
-        System.out.println("Updating booking " + id + " status to " + newStatus + ", preserveLoyalty=" + preserveLoyalty);
+    public ServiceBooking updateBookingStatus(Long bookingId, BookingStatus newStatus, String comment, boolean preserveLoyalty) {
+        System.out.println("Updating booking " + bookingId + " status to " + newStatus + ", preserveLoyalty=" + preserveLoyalty);
         
-        ServiceBooking booking = getBookingById(id);
+        ServiceBooking booking = getBookingById(bookingId);
         BookingStatus currentStatus = booking.getStatus();
         System.out.println("Current status: " + currentStatus);
 
@@ -131,24 +178,67 @@ public class ServiceBookingService {
         booking.setStatusComment(comment);
         booking.setUpdatedAt(LocalDateTime.now());
 
-        if (newStatus == BookingStatus.CANCELLED && booking.getDiscountApplied() != null && 
-                booking.getDiscountApplied() && preserveLoyalty) {
-            System.out.println("Preserving loyalty discount for booking: " + id);
-            Customer customer = booking.getCustomer();
-            ServiceProvider provider = booking.getProviderService().getServiceProvider();
-            try {
-                loyaltyService.preserveLoyaltyDiscount(customer, provider);
-            } catch (Exception e) {
-                System.out.println("Error preserving loyalty discount: " + e.getMessage());
-                // Continue with the status update even if loyalty preservation fails
+        // If completing the booking, update the customer's service count for loyalty program
+        if (newStatus == BookingStatus.COMPLETED) {
+            // Increment the loyalty counter for completed service
+            loyaltyService.processCompletedBooking(booking);
+            
+            // Add notification for service completion
+            notificationService.createNotification(
+                "Your booking for " + booking.getProviderService().getServiceName() + " has been completed",
+                NotificationType.BOOKING_COMPLETED,
+                "/customer/bookings",
+                Long.valueOf(booking.getCustomer().getId()),
+                UserType.CUSTOMER
+            );
+            
+            // Return the updated booking
+            ServiceBooking updatedBooking = bookingRepository.save(booking);
+            return updatedBooking;
+        } else if (newStatus == BookingStatus.CONFIRMED) {
+            // Send notification to customer that booking is confirmed
+            notificationService.createNotification(
+                "Your booking for " + booking.getProviderService().getServiceName() + " has been confirmed",
+                NotificationType.BOOKING_CONFIRMED,
+                "/customer/bookings",
+                Long.valueOf(booking.getCustomer().getId()),
+                UserType.CUSTOMER
+            );
+        } else if (newStatus == BookingStatus.CANCELLED) {
+            if (booking.getDiscountApplied() != null && booking.getDiscountApplied() && preserveLoyalty) {
+                System.out.println("Preserving loyalty discount for booking: " + bookingId);
+                Customer customer = booking.getCustomer();
+                ServiceProvider provider = booking.getProviderService().getServiceProvider();
+                try {
+                    loyaltyService.preserveLoyaltyDiscount(customer, provider);
+                } catch (Exception e) {
+                    System.out.println("Error preserving loyalty discount: " + e.getMessage());
+                    // Continue with the status update even if loyalty preservation fails
+                }
             }
+            
+            // Send notification about cancellation to both parties
+            notificationService.createNotification(
+                "Your booking for " + booking.getProviderService().getServiceName() + " has been cancelled",
+                NotificationType.BOOKING_CANCELLED,
+                "/customer/bookings",
+                Long.valueOf(booking.getCustomer().getId()),
+                UserType.CUSTOMER
+            );
+            
+            notificationService.createNotification(
+                "Booking for " + booking.getProviderService().getServiceName() + " has been cancelled",
+                NotificationType.BOOKING_CANCELLED,
+                "/provider/bookings",
+                Long.valueOf(booking.getProviderService().getServiceProvider().getId()),
+                UserType.SERVICE_PROVIDER
+            );
         }
         
         // Save the status change
         ServiceBooking updatedBooking = bookingRepository.save(booking);
 
         if (newStatus == BookingStatus.COMPLETED) {
-            System.out.println("Processing completed booking for loyalty program: " + id);
             try {
                 loyaltyService.processCompletedBooking(updatedBooking);
             } catch (Exception e) {
@@ -186,8 +276,7 @@ public class ServiceBookingService {
         
         return updatedBooking;
     }
-    
-    // This method is now deprecated - use updateBookingStatus with CANCELLED status instead
+
     @Deprecated
     public void cancelBooking(Long id) {
         updateBookingStatus(id, BookingStatus.CANCELLED, "Cancelled by system", false);

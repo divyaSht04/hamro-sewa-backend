@@ -9,6 +9,9 @@ import project.hamrosewa.dto.CustomerDTO;
 import project.hamrosewa.dto.ServiceProviderDTO;
 import project.hamrosewa.exceptions.UserValidationException;
 import project.hamrosewa.model.*;
+import project.hamrosewa.model.Notification.NotificationType;
+import project.hamrosewa.model.UserType;
+import project.hamrosewa.repository.AdminRepository;
 import project.hamrosewa.repository.RoleRepository;
 import project.hamrosewa.repository.ServiceProviderRepository;
 import project.hamrosewa.repository.UserRepository;
@@ -36,6 +39,12 @@ public class ServiceProviderService {
 
     @Autowired
     private ImageService imageStorageService;
+    
+    @Autowired
+    private NotificationService notificationService;
+    
+    @Autowired
+    private AdminRepository adminRepository;
 
 
     public void registerServiceProvider(ServiceProviderDTO serviceProviderDTO) throws IOException {
@@ -71,7 +80,19 @@ public class ServiceProviderService {
 
         Role userRole = roleRepository.findByName("ROLE_SERVICE_PROVIDER");
         serviceProvider.setRole(userRole);
-        userRepository.save(serviceProvider);
+        serviceProvider = userRepository.save(serviceProvider);
+        
+        // Send notification to all admin users about the new service provider registration
+        List<Admin> admins = adminRepository.findAll();
+        for (Admin admin : admins) {
+            notificationService.createNotification(
+                "New service provider registered: " + serviceProvider.getBusinessName() + " (" + serviceProvider.getUsername() + ")",
+                NotificationType.ACCOUNT_CREATED,
+                "/admin/service-providers",
+                Long.valueOf(admin.getId()),
+                UserType.ADMIN
+            );
+        }
     }
 
 
