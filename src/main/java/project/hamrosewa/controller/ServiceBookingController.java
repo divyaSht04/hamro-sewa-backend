@@ -74,7 +74,6 @@ public class ServiceBookingController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> cancelBooking(@PathVariable Long id) {
         try {
-            // Use the updateBookingStatus method instead of deprecated cancelBooking
             bookingService.updateBookingStatus(id, BookingStatus.CANCELLED, "Cancelled by system", false);
             return new ResponseEntity<>("Booking cancelled successfully", HttpStatus.OK);
         } catch (Exception e) {

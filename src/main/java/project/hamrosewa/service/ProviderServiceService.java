@@ -2,6 +2,7 @@ package project.hamrosewa.service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import project.hamrosewa.dto.ProviderServiceDTO;
 import project.hamrosewa.exceptions.ProviderServiceException;
@@ -17,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.antlr.v4.runtime.tree.xpath.XPath.findAll;
 
@@ -44,6 +46,9 @@ public class ProviderServiceService {
     
     @Autowired
     private AdminRepository adminRepository;
+    
+    @Autowired
+    private EmailService emailService;
 
     public ProviderService createService(ProviderServiceDTO serviceDTO) throws IOException {
         ServiceProvider provider = serviceProviderRepository.findById(serviceDTO.getServiceProviderId())
@@ -166,23 +171,83 @@ public class ProviderServiceService {
         if (service.getImagePath() != null) {
             imageService.deleteImage(service.getImagePath());
         }
+        providerServiceRepository.delete(service);
+    }
+
+    @Transactional
+    public void deleteServiceByAdmin(Long serviceId, String reason) {
+        Optional<ProviderService> serviceOptional = providerServiceRepository.findById(serviceId);
+        if (serviceOptional.isEmpty()) {
+            throw new ProviderServiceException("Service Not Found!!");
+        }
         
-        // Store service provider info before deleting the service
+        ProviderService service = serviceOptional.get();
         ServiceProvider serviceProvider = service.getServiceProvider();
         String serviceName = service.getServiceName();
+
+        String notificationMessage = "Your service '" + serviceName + "' has been deleted by an administrator. ";
+        if (reason != null && !reason.trim().isEmpty()) {
+            notificationMessage += "Reason: " + reason + ". ";
+        }
+        notificationMessage += "Please contact support if you have any questions.";
+        
+        // Handle reviews (clean up relationships before deletion)
+        if (service.getReviews() != null && !service.getReviews().isEmpty()) {
+            service.getReviews().forEach(r -> {
+                r.setProviderService(null);
+                r.setCustomer(null);
+                ServiceBooking booking = r.getBooking();
+                if (booking != null) {
+                    booking.setReview(null);
+                }
+                r.setBooking(null);
+                reviewRepository.delete(r);
+            });
+            service.getReviews().clear();
+        }
+        
+        // Clean up resources
+        if (service.getPdfPath() != null) {
+            pdfService.deletePdf(service.getPdfPath());
+        }
+        
+        if (service.getImagePath() != null) {
+            imageService.deleteImage(service.getImagePath());
+        }
         
         // Delete the service
         providerServiceRepository.delete(service);
         
-        // Notify service provider about the service deletion
-        notificationService.createNotification(
-            "Your service '" + serviceName + "' has been deleted by an administrator. "
-            + "Please contact support if you have any questions.",
-            NotificationType.SERVICE_REJECTED,
-            "/provider/services",
-            Long.valueOf(serviceProvider.getId()),
-            UserType.SERVICE_PROVIDER
-        );
+        // Send real-time notification
+        try {
+            notificationService.createNotification(
+                    notificationMessage,
+                    NotificationType.SERVICE_REJECTED,
+                    "/provider/services",
+                    Long.valueOf(serviceProvider.getId()),
+                    UserType.SERVICE_PROVIDER
+            );
+            System.out.println("Notification sent to service provider ID: " + serviceProvider.getId());
+        } catch (Exception e) {
+            System.err.println("Failed to send notification: " + e.getMessage());
+        }
+        
+        // Send email notification
+        try {
+            if (serviceProvider.getEmail() != null && !serviceProvider.getEmail().isEmpty()) {
+                emailService.sendServiceDeletionEmail(
+                        serviceProvider.getEmail(),
+                        serviceProvider.getUsername(),
+                        serviceName,
+                        reason
+                );
+                System.out.println("Email sent to service provider: " + serviceProvider.getEmail());
+            } else {
+                System.err.println("Cannot send email: Service provider email is null or empty");
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send email: " + e.getMessage());
+        }
     }
 
     public ProviderService getServiceById(Long serviceId) {

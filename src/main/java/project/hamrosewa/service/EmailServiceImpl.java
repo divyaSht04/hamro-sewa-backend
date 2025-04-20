@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
+
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -193,6 +193,39 @@ public class EmailServiceImpl implements EmailService {
             logger.info("OTP verification email sent to {}", to);
         } catch (Exception e) {
             logger.error("Failed to send OTP verification email: {}", e.getMessage());
+            // No exception re-throw to prevent stack overflow in @Async method
+        }
+    }
+    
+    @Override
+    @Async
+    public void sendServiceDeletionEmail(String to, String username, String serviceName, String reason) {
+        try {
+            Map<String, Object> templateModel = new HashMap<>();
+            templateModel.put("username", username);
+            templateModel.put("serviceName", serviceName);
+            templateModel.put("reason", reason != null && !reason.trim().isEmpty() ? reason : "Not specified");
+            templateModel.put("deletionDate", LocalDateTime.now().format(DATE_FORMATTER));
+            templateModel.put("currentYear", LocalDateTime.now().getYear());
+            
+            // Either use a dedicated template or repurpose an existing one
+            String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>"
+                + "<h2 style='color: #d32f2f;'>Service Deleted</h2>"
+                + "<p>Dear " + username + ",</p>"
+                + "<p>Your service <strong>" + serviceName + "</strong> has been deleted by an administrator.</p>"
+                + "<p><strong>Reason:</strong> " + templateModel.get("reason") + "</p>"
+                + "<p>If you believe this was done in error or need further clarification, please contact our support team.</p>"
+                + "<p>Thank you for your understanding.</p>"
+                + "<p>Regards,<br>The HamroSewa Team</p>"
+                + "<hr>"
+                + "<p style='font-size: 12px; color: #666;'>© " + templateModel.get("currentYear") + " HamroSewa. All rights reserved.</p>"
+                + "</div>";
+            
+            sendHtmlEmail(to, "Service Deleted: " + serviceName, htmlContent);
+            
+            logger.info("Service deletion email sent to {} for service: {}", to, serviceName);
+        } catch (Exception e) {
+            logger.error("Failed to send service deletion email: {}", e.getMessage());
             // No exception re-throw to prevent stack overflow in @Async method
         }
     }

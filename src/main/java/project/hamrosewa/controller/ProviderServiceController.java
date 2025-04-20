@@ -92,6 +92,20 @@ public class ProviderServiceController {
             return new ResponseEntity<>("Failed to delete service: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+    
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @DeleteMapping("/admin/{serviceId}")
+    public ResponseEntity<?> deleteServiceByAdmin(
+            @PathVariable Long serviceId,
+            @RequestParam(value = "reason", required = false) String reason
+    ) {
+        try {
+            providerServiceService.deleteServiceByAdmin(serviceId, reason);
+            return new ResponseEntity<>("Service deleted successfully by admin", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to delete service: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
 
     @GetMapping("/provider/{providerId}")
     public ResponseEntity<?> getProviderServices(@PathVariable Long providerId) {

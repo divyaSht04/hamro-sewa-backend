@@ -80,4 +80,14 @@ public interface EmailService {
      * @param expiryMinutes minutes until the OTP expires
      */
     void sendOTPVerificationEmail(String to, String username, String otp, int expiryMinutes);
+    
+    /**
+     * Send notification to service provider when their service is deleted by an admin
+     * 
+     * @param to service provider's email address
+     * @param username service provider's username
+     * @param serviceName name of the deleted service
+     * @param reason reason for deletion (optional)
+     */
+    void sendServiceDeletionEmail(String to, String username, String serviceName, String reason);
 }

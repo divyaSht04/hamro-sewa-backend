@@ -74,6 +74,16 @@ public class ReviewController {
         return new ResponseEntity<>(exists, HttpStatus.OK);
     }
     
+    @GetMapping("/booking/{bookingId}")
+    public ResponseEntity<?> getReviewByBookingId(@PathVariable Long bookingId) {
+        try {
+            Review review = reviewService.getReviewByBookingId(bookingId);
+            return new ResponseEntity<>(review, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+    
     @PutMapping("/{id}")
     public ResponseEntity<?> updateReview(@PathVariable Long id, @Valid @RequestBody ReviewDTO reviewDTO) {
         try {

@@ -171,4 +171,14 @@ public class ReviewService {
         // Check if a review exists for this booking
         return reviewRepository.existsByBookingId(bookingId);
     }
+    
+    public Review getReviewByBookingId(Long bookingId) {
+        // First verify that the booking exists
+        ServiceBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId));
+        
+        // Find the review for this booking
+        return reviewRepository.findByBookingId(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found for booking with id: " + bookingId));
+    }
 }

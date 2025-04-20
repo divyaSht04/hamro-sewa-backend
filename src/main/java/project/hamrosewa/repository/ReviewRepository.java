@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import project.hamrosewa.model.Review;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
@@ -15,6 +16,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     
     @Query("SELECT COUNT(r) > 0 FROM Review r WHERE r.booking.id = :bookingId")
     boolean existsByBookingId(Long bookingId);
+    
+    @Query("SELECT r FROM Review r WHERE r.booking.id = :bookingId")
+    Optional<Review> findByBookingId(Long bookingId);
     
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.providerService.id = :providerServiceId")
     Double calculateAverageRatingForService(Long providerServiceId);
