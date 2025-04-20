@@ -29,7 +29,7 @@ public class JWTUtil {
                     .claims(claims)
                     .subject(username)
                     .issuedAt(new Date(System.currentTimeMillis()))
-                    .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000)) // 1 hour
+                    .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000 * 2)) // 2 hour
                     .signWith(getKey())
                     .compact();
         } catch (Exception e) {

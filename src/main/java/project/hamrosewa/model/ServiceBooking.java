@@ -1,6 +1,8 @@
 package project.hamrosewa.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -10,6 +12,7 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 @Table(name = "service_bookings")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class ServiceBooking {
 
     @Id
@@ -18,13 +21,12 @@ public class ServiceBooking {
     
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
-    @JsonIgnore
+    @JsonIgnore // Keep this to prevent infinite recursion with Customer
     private Customer customer;
     
     @ManyToOne
     @JoinColumn(name = "provider_service_id", nullable = false)
-    @JsonIgnore
-    private ProviderService providerService;
+    private ProviderService providerService; // Keep without @JsonIgnore so we get service data
     
     @Column(nullable = false)
     private LocalDateTime bookingDateTime = LocalDateTime.now();
@@ -36,7 +38,7 @@ public class ServiceBooking {
     private BookingStatus status = BookingStatus.PENDING;
     
     @OneToOne(mappedBy = "booking", cascade = CascadeType.REFRESH, orphanRemoval = false)
-    @JsonIgnore
+    @JsonIgnore // Add this back to prevent cycles
     private Review review;
     
     @Column(name = "status_comment")

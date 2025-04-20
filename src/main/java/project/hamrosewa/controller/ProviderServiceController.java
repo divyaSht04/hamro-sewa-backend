@@ -199,9 +199,6 @@ public class ProviderServiceController {
         }
     }
 
-    /**
-     * Endpoint to get all services (for admin)
-     */
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/all")
     public ResponseEntity<?> getAllServices() {

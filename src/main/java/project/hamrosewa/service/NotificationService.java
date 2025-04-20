@@ -23,29 +23,37 @@ public class NotificationService {
 
 
     @Transactional
-    public void createNotification(String message,
-                                   NotificationType type,
-                                   String url,
-                                   Long recipientId,
-                                   UserType recipientType) {
-        // Create and save the notification
-            Notification notification = Notification.builder()
-                    .message(message)
-                    .type(type)
-                    .url(url)
-                    .recipientId(recipientId)
-                    .recipientType(recipientType)
-                    .createdAt(LocalDateTime.now())
-                    .isRead(false)
-                    .build();
-            
-            notification = notificationRepository.save(notification);
-            
-            // Send to WebSocket
-            NotificationDTO notificationDTO = NotificationDTO.fromEntity(notification);
-            String destination = String.format("/user/%s-%d/notifications", recipientType.toString().toLowerCase(), recipientId);
-            messagingTemplate.convertAndSend(destination, notificationDTO);
+public void createNotification(String message,
+                               NotificationType type,
+                               String url,
+                               Long recipientId,
+                               UserType recipientType) {
+    // Validate recipientId
+    if (recipientId == null || recipientId <= 0) {
+        System.err.println("[NotificationService] Invalid recipientId for notification: " + recipientId + ", recipientType: " + recipientType + ". Message: " + message);
+        return;
     }
+    // Log recipientId and recipientType before saving
+    System.out.println("[NotificationService] Creating notification for recipientId: " + recipientId + ", recipientType: " + recipientType);
+    try {
+        Notification notification = Notification.builder()
+                .message(message)
+                .type(type)
+                .url(url)
+                .recipientId(recipientId)
+                .recipientType(recipientType)
+                .createdAt(LocalDateTime.now())
+                .isRead(false)
+                .build();
+        notification = notificationRepository.save(notification);
+        // Send to WebSocket
+        NotificationDTO notificationDTO = NotificationDTO.fromEntity(notification);
+        String destination = String.format("/user/%s-%d/notifications", recipientType.toString().toLowerCase(), recipientId);
+        messagingTemplate.convertAndSend(destination, notificationDTO);
+    } catch (Exception e) {
+        System.err.println("[NotificationService] Failed to create notification: " + e.getMessage());
+    }
+}
     
 
     public List<NotificationDTO> getUserNotifications(Long userId, UserType userType) {

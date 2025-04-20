@@ -148,8 +148,7 @@ public class ServiceBookingService {
     }
     
     public ServiceBooking getBookingById(Long id) {
-        return bookingRepository.findById(id)
-                .orElseThrow(() -> new BookingNotFoundException(id));
+        return bookingRepository.findById(id).orElseThrow(() -> new BookingNotFoundException(id));
     }
     
     public List<ServiceBooking> getBookingsByCustomerId(int customerId) {

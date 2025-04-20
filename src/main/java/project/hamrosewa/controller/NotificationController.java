@@ -59,8 +59,7 @@ public class NotificationController {
     public ResponseEntity<Long> getUnreadCount(
             Authentication authentication,
             @RequestParam UserType userType) {
-        
-        // Get email from authentication and find user
+
         String email = authentication.getName();
         Optional<User> userOpt = userRepository.findByEmail(email);
         
@@ -82,8 +81,7 @@ public class NotificationController {
     public ResponseEntity<Void> markAllAsRead(
             Authentication authentication,
             @RequestParam UserType userType) {
-        
-        // Get email from authentication and find user
+
         String email = authentication.getName();
         Optional<User> userOpt = userRepository.findByEmail(email);
         

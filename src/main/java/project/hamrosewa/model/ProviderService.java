@@ -1,8 +1,9 @@
 package project.hamrosewa.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,6 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @Table(name = "provider_services")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class ProviderService {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -39,23 +41,23 @@ public class ProviderService {
     private String category;
 
     @OneToMany(mappedBy = "providerService", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
+    @JsonIgnore // Keep this to prevent infinite recursion
     private List<ServiceBooking> bookings;
-    
+
     @OneToMany(mappedBy = "providerService", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
+    @JsonIgnore // Keep this to prevent infinite recursion
     private List<Review> reviews;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private ServiceStatus status = ServiceStatus.PENDING;
-    
+
     @Column(name = "admin_feedback")
     private String adminFeedback;
-    
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
@@ -64,7 +66,7 @@ public class ProviderService {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
-    
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

@@ -9,6 +9,7 @@ import project.hamrosewa.model.Admin;
 import project.hamrosewa.model.User;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -18,5 +19,4 @@ public interface AdminRepository extends JpaRepository<Admin, Long> {
     Optional<User> findByEmail(String email);
 
     Optional<User> findByPhoneNumber(String number);
-
 }

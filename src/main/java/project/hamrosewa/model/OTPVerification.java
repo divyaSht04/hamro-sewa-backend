@@ -41,6 +41,6 @@ public class OTPVerification {
     }
     
     public enum UserType {
-        CUSTOMER, SERVICE_PROVIDER
+        CUSTOMER, SERVICE_PROVIDER, ADMIN
     }
 }
