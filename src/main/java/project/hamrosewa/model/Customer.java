@@ -18,7 +18,7 @@ import java.util.List;
 @Entity
 @Data
 @PrimaryKeyJoinColumn(name = "customer_id")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+//@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Customer extends User{
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)

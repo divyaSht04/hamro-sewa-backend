@@ -66,6 +66,8 @@ public class Notification {
         SERVICE_APPROVED,
         SERVICE_REJECTED,
         NEW_REVIEW,
+        REVIEW_UPDATED,
+        REVIEW_DELETED,
         NEW_MESSAGE,
         ACCOUNT_VERIFIED,
         ACCOUNT_CREATED,

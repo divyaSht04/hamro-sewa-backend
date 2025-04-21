@@ -139,11 +139,43 @@ public class ReviewService {
         if (existingReview.getCustomer().getId() != reviewDTO.getCustomerId()) {
             throw new ReviewValidationException("Customer does not own this review");
         }
-
+        
+        // Get provider service and service provider for notification
+        ProviderService providerService = existingReview.getProviderService();
+        int oldRating = existingReview.getRating();
+        
         existingReview.setRating(reviewDTO.getRating());
         existingReview.setComment(reviewDTO.getComment());
 
-        return reviewRepository.save(existingReview);
+        Review updatedReview = reviewRepository.save(existingReview);
+        
+        // Ensure service provider ID is valid
+        Long serviceProviderId = null;
+        try {
+            serviceProviderId = Long.valueOf(providerService.getServiceProvider().getId());
+        } catch (Exception e) {
+            System.err.println("Error getting service provider ID: " + e.getMessage());
+            // Still return the updated review, but don't send notification
+            return updatedReview;
+        }
+
+        // Send notification to the service provider about the review update
+        try {
+            notificationService.createNotification(
+                "A review for your service '" + 
+                (providerService.getServiceName() != null ? providerService.getServiceName() : "Unknown Service") + 
+                "' has been updated - Rating changed from " + oldRating + " to " + reviewDTO.getRating() + " stars",
+                NotificationType.REVIEW_UPDATED,
+                "/service-provider/reviews",
+                serviceProviderId,
+                UserType.SERVICE_PROVIDER
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to create update notification: " + e.getMessage());
+            // Continue execution - notification failure shouldn't prevent review update
+        }
+        
+        return updatedReview;
     }
 
     public void deleteReview(Long reviewId, Long customerId) {
@@ -154,13 +186,61 @@ public class ReviewService {
         if (existingReview.getCustomer().getId() != customerId.intValue()) {
             throw new ReviewValidationException("Customer does not own this review");
         }
+        
+        // Get provider service and service provider for notification
+        ProviderService providerService = existingReview.getProviderService();
+        Customer customer = existingReview.getCustomer();
+        int rating = existingReview.getRating();
 
+        // Remove the reference from the booking
         ServiceBooking booking = existingReview.getBooking();
         if (booking != null) {
             booking.setReview(null);
+            bookingRepository.save(booking);
         }
 
-        reviewRepository.deleteById(reviewId);
+        reviewRepository.delete(existingReview);
+        
+        // Get customer name safely
+        String customerName = "a customer";
+        try {
+            if (customer != null) {
+                // Try to get full name or use username as fallback
+                if (customer.getFullName() != null && !customer.getFullName().isEmpty()) {
+                    customerName = customer.getFullName();
+                } else if (customer.getUsername() != null) {
+                    customerName = customer.getUsername();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting customer name: " + e.getMessage());
+            // Fall back to generic name
+        }
+        
+        // Ensure service provider ID is valid
+        Long serviceProviderId = null;
+        try {
+            serviceProviderId = Long.valueOf(providerService.getServiceProvider().getId());
+        } catch (Exception e) {
+            System.err.println("Error getting service provider ID: " + e.getMessage());
+            return; // Can't send notification without valid recipient
+        }
+        
+        // Send notification to the service provider about the review deletion
+        try {
+            notificationService.createNotification(
+                "A review (" + rating + " stars) for your service '" + 
+                (providerService.getServiceName() != null ? providerService.getServiceName() : "Unknown Service") + 
+                "' has been deleted by " + customerName,
+                NotificationType.REVIEW_DELETED,
+                "/service-provider/reviews",
+                serviceProviderId,
+                UserType.SERVICE_PROVIDER
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to create deletion notification: " + e.getMessage());
+            // Continue execution - notification failure shouldn't prevent review deletion
+        }
     }
 
     public Boolean existsByBookingId(Long bookingId) {

@@ -1,8 +1,6 @@
 package project.hamrosewa.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +13,7 @@ import java.util.List;
 @Getter
 @Setter
 @Table(name = "provider_services")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+// Removed JsonIdentityInfo to prevent inconsistent serialization
 public class ProviderService {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

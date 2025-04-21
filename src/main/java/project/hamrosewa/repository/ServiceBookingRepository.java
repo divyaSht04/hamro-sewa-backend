@@ -25,13 +25,7 @@ public interface ServiceBookingRepository extends JpaRepository<ServiceBooking, 
     @Query("SELECT b FROM ServiceBooking b WHERE b.status = project.hamrosewa.model.BookingStatus.COMPLETED")
     List<ServiceBooking> findAllCompletedBookings();
     
-    /**
-     * Find completed bookings by a specific customer with a specific service provider
-     * 
-     * @param customerId the customer ID
-     * @param serviceProviderId the service provider ID
-     * @return list of completed bookings
-     */
+
     @Query("SELECT b FROM ServiceBooking b WHERE b.customer.id = :customerId AND b.providerService.serviceProvider.id = :serviceProviderId AND b.status = project.hamrosewa.model.BookingStatus.COMPLETED")
     List<ServiceBooking> findCompletedBookingsByCustomerAndProvider(int customerId, int serviceProviderId);
 }

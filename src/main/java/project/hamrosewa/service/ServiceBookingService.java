@@ -38,6 +38,9 @@ public class ServiceBookingService {
     
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private ServiceProviderService serviceProviderService;
     
     @Transactional
     public ServiceBooking createBooking(ServiceBookingDTO bookingDTO) {
@@ -177,12 +180,9 @@ public class ServiceBookingService {
         booking.setStatusComment(comment);
         booking.setUpdatedAt(LocalDateTime.now());
 
-        // If completing the booking, update the customer's service count for loyalty program
         if (newStatus == BookingStatus.COMPLETED) {
-            // Increment the loyalty counter for completed service
             loyaltyService.processCompletedBooking(booking);
-            
-            // Add notification for service completion
+
             notificationService.createNotification(
                 "Your booking for " + booking.getProviderService().getServiceName() + " has been completed",
                 NotificationType.BOOKING_COMPLETED,
@@ -190,8 +190,7 @@ public class ServiceBookingService {
                 Long.valueOf(booking.getCustomer().getId()),
                 UserType.CUSTOMER
             );
-            
-            // Return the updated booking
+
             ServiceBooking updatedBooking = bookingRepository.save(booking);
             return updatedBooking;
         } else if (newStatus == BookingStatus.CONFIRMED) {
@@ -233,8 +232,7 @@ public class ServiceBookingService {
                 UserType.SERVICE_PROVIDER
             );
         }
-        
-        // Save the status change
+
         ServiceBooking updatedBooking = bookingRepository.save(booking);
 
         if (newStatus == BookingStatus.COMPLETED) {
@@ -268,7 +266,6 @@ public class ServiceBookingService {
                     System.out.println("Cannot send email: Customer or customer email is null");
                 }
             } catch (Exception e) {
-                // Log the error but don't fail the booking status update
                 System.out.println("Failed to send booking completion email: " + e.getMessage());
             }
         }

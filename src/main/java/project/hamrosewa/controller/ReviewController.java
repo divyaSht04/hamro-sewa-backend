@@ -97,9 +97,9 @@ public class ReviewController {
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteReview(@PathVariable Long id, @RequestParam Integer customerId) {
+    public ResponseEntity<?> deleteReview(@PathVariable Long id, @RequestParam Long customerId) {
         try {
-            reviewService.deleteReview(id, customerId.longValue());
+            reviewService.deleteReview(id, customerId);
             return new ResponseEntity<>("Review deleted successfully", HttpStatus.OK);
         } catch (ReviewValidationException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);

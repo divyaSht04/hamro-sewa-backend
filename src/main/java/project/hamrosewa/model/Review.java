@@ -1,8 +1,6 @@
 package project.hamrosewa.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -11,7 +9,6 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 @Table(name = "REVIEWS")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -32,7 +29,7 @@ public class Review {
     private ServiceBooking booking;
 
     @Column(name = "RATING", nullable = false)
-    private int rating;
+    private int rating; // Database has a CHECK constraint requiring valid values (likely 1-5)
 
     @Column(name = "cust_comment", columnDefinition="CLOB")
     private String comment;

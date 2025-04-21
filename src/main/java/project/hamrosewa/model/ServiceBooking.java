@@ -1,8 +1,6 @@
 package project.hamrosewa.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -12,7 +10,7 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 @Table(name = "service_bookings")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+// Removed JsonIdentityInfo to prevent inconsistent object/id serialization
 public class ServiceBooking {
 
     @Id
@@ -21,7 +19,7 @@ public class ServiceBooking {
     
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
-    @JsonIgnore // Keep this to prevent infinite recursion with Customer
+//    @JsonIgnore // Keep this to prevent infinite recursion with Customer
     private Customer customer;
     
     @ManyToOne
