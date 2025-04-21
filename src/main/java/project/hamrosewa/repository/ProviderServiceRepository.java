@@ -12,4 +12,6 @@ import java.util.List;
 public interface ProviderServiceRepository extends JpaRepository<ProviderService, Long> {
     List<ProviderService> findByServiceProvider(ServiceProvider serviceProvider);
     List<ProviderService> findByStatus(ServiceStatus status);
+
+    List<ProviderService> findByServiceProviderId(int providerIdInt);
 }

@@ -6,15 +6,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.AdminDTO;
+import project.hamrosewa.dto.AdminDashboardMetricsDTO;
 import project.hamrosewa.exceptions.UserValidationException;
-import project.hamrosewa.model.Admin;
-import project.hamrosewa.model.Role;
-import project.hamrosewa.model.ServiceBooking;
-import project.hamrosewa.model.User;
-import project.hamrosewa.repository.AdminRepository;
-import project.hamrosewa.repository.RoleRepository;
-import project.hamrosewa.repository.ServiceBookingRepository;
-import project.hamrosewa.repository.UserRepository;
+import project.hamrosewa.model.*;
+import project.hamrosewa.repository.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -44,6 +39,15 @@ public class AdminService {
 
     @Autowired
     private ServiceBookingRepository serviceBookingRepository;
+    
+    @Autowired
+    private CustomerRepository customerRepository;
+    
+    @Autowired
+    private ServiceProviderRepository serviceProviderRepository;
+    
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     public void registerAdmin(AdminDTO adminDTO) throws IOException {
         boolean usernameExists = userRepository.findByUsername(adminDTO.getUsername()).isPresent();
@@ -200,12 +204,80 @@ public class AdminService {
         BigDecimal totalServiceValue = BigDecimal.ZERO;
 
         for (ServiceBooking booking : completedBookings) {
-            BigDecimal servicePrice = booking.getProviderService().getPrice();
-            totalServiceValue = totalServiceValue.add(servicePrice);
+            BigDecimal servicePrice = booking.getDiscountApplied() ? 
+                booking.getDiscountedPrice() : booking.getOriginalPrice();
+            
+            if (servicePrice != null) {
+                totalServiceValue = totalServiceValue.add(servicePrice);
+            }
         }
 
-        BigDecimal adminPercentage = new BigDecimal("0.15");
+        BigDecimal adminPercentage = new BigDecimal("0.20"); // Updated to 20% as required
         return totalServiceValue.multiply(adminPercentage).setScale(2, RoundingMode.HALF_UP);
+    }
+    
+    /**
+     * Get admin dashboard metrics
+     * @return AdminDashboardMetricsDTO containing dashboard metrics
+     */
+    public AdminDashboardMetricsDTO getDashboardMetrics() {
+        // Calculate total users
+        int totalUsers = (int) userRepository.count();
+        
+        // Calculate total service providers
+        int totalServiceProviders = (int) serviceProviderRepository.count();
+        
+        // Calculate total revenue (20% of completed services)
+        double totalRevenue = calculateAdminEarnings().doubleValue();
+        
+        // Calculate average rating of all completed services
+        double averageRating = calculateAverageRating();
+        
+        return new AdminDashboardMetricsDTO(
+            totalUsers,
+            totalServiceProviders,
+            totalRevenue,
+            averageRating
+        );
+    }
+    
+    /**
+     * Calculate average rating of all completed services
+     * @return average rating
+     */
+    private double calculateAverageRating() {
+        // Get all completed bookings
+        List<ServiceBooking> completedBookings = serviceBookingRepository.findAllCompletedBookings();
+        
+        // Get IDs of completed bookings
+        List<Long> completedBookingIds = completedBookings.stream()
+            .map(ServiceBooking::getId)
+            .toList();
+            
+        if (completedBookingIds.isEmpty()) {
+            return 0.0;
+        }
+        
+        // Get reviews for completed bookings
+        final double[] totalRating = {0.0};
+        final int[] reviewCount = {0};
+        
+        for (Long bookingId : completedBookingIds) {
+            try {
+                // Find review by booking ID if exists
+                reviewRepository.findByBookingId(bookingId).ifPresent(review -> {
+                    if (review.getRating() > 0) {
+                        totalRating[0] += review.getRating();
+                        reviewCount[0]++;
+                    }
+                });
+            } catch (Exception e) {
+                // Skip reviews that can't be found
+                continue;
+            }
+        }
+        
+        return reviewCount[0] > 0 ? totalRating[0] / reviewCount[0] : 0.0;
     }
 
 }

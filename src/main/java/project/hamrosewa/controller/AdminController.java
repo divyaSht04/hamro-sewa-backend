@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.hamrosewa.dto.AdminDTO;
+import project.hamrosewa.dto.AdminDashboardMetricsDTO;
 import project.hamrosewa.dto.CustomerDTO;
 import project.hamrosewa.model.Admin;
 import project.hamrosewa.model.BookingStatus;
@@ -85,6 +86,25 @@ public class AdminController {
         } catch (Exception e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Failed to calculate admin earnings");
+            errorResponse.put("message", e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    /**
+     * Get admin dashboard metrics including total users, total service providers, 
+     * total revenue (20% of completed services), and average ratings
+     * 
+     * @return Dashboard metrics in AdminDashboardMetricsDTO format
+     */
+    @GetMapping("/dashboard-metrics")
+    public ResponseEntity<?> getDashboardMetrics() {
+        try {
+            AdminDashboardMetricsDTO metrics = adminService.getDashboardMetrics();
+            return ResponseEntity.ok(metrics);
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to get dashboard metrics");
             errorResponse.put("message", e.getMessage());
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
